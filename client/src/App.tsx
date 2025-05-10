@@ -5,10 +5,10 @@ import MainPage from "./pages/MainPage";
 import ReportsPage from "./pages/ReportsPage";
 import SalesPage from "./pages/SalesPage";
 import SettingsPage from "./pages/SettingsPage";
-import Organizations from "./pages/OrganizationsPage";
 import type { JSX } from "react";
 import OrganizationsPage from "./pages/OrganizationsPage";
 import OrganizationCreatePage from "./pages/OrganizationCreatePage";
+import OrganizationEditPage from "./pages/OrganizationEditPage";
 
 function App(): JSX.Element {
   const [active, setActive] = useState<string>("");
@@ -28,6 +28,7 @@ function App(): JSX.Element {
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/organizations" element={<OrganizationsPage />} />
             <Route path="/organizations/create" element={<OrganizationCreatePage />} />
+            <Route path="/organizations/:id" element={<OrganizationEditPage />} />
           </Routes>
         </div>
       </div>

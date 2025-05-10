@@ -64,4 +64,42 @@ router.get("/", async (_, res) => {
   res.json(list);
 });
 
+// GET  /api/organizations/:id — вернуть одну организацию
+router.get("/:id", async (req, res) => {
+  try {
+    const org = await Organization.findByPk(req.params.id);
+    if (!org) return res.status(404).json({ error: "Организация не найдена" });
+    res.json(org);
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT  /api/organizations/:id — обновить организацию
+router.put("/:id", async (req, res) => {
+  try {
+    const org = await Organization.findByPk(req.params.id);
+    if (!org) return res.status(404).json({ error: "Организация не найдена" });
+    await org.update(req.body);
+    res.json(org);
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/organizations/:id — удалить организацию
+router.delete("/:id", async (req, res) => {
+  try {
+    const org = await Organization.findByPk(req.params.id);
+    if (!org) return res.status(404).json({ error: "Организация не найдена" });
+    await org.destroy();
+    res.status(204).end();
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
