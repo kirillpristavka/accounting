@@ -1,33 +1,29 @@
 // src/components/Topbar.tsx
-import React, { useRef, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 
 const routeNames: Record<string, string> = {
   '/': 'Начальная страница',
-  '/main': 'Главная',
+  '/main': 'Главное',
   '/organizations': 'Организации',
-  // …другие маршруты…
+  '/organizations/create': 'Организация (создание)',
+  // …добавьте при необходимости остальные пути…
 };
 
 const Topbar: React.FC = () => {
   const { openTabs, openTab, closeTab } = useAppContext();
   const location = useLocation();
   const navigate = useNavigate();
-  const justClosedRef = useRef<string | null>(null);
 
+  // Авто‑открытие вкладки при смене URL
   useEffect(() => {
     const path = location.pathname;
     const label = routeNames[path];
-    const alreadyOpen = openTabs.some(tab => tab.path === path);
-
-    if (label && !alreadyOpen && justClosedRef.current !== path) {
+    if (label && !openTabs.some(tab => tab.path === path)) {
       openTab(label, path);
     }
-    if (justClosedRef.current === path) {
-      justClosedRef.current = null;
-    }
-  }, [location.pathname, openTabs, openTab]);
+  }, [location.pathname]);
 
   const handleSelect = (path: string) => {
     if (location.pathname !== path) {
@@ -35,14 +31,9 @@ const Topbar: React.FC = () => {
     }
   };
 
-  const handleClose = (
-    e: React.MouseEvent<HTMLButtonElement>,
-    path: string
-  ) => {
+  const handleClose = (e: React.MouseEvent, path: string) => {
     e.stopPropagation();
-    justClosedRef.current = path;
     closeTab(path);
-
     if (location.pathname === path) {
       const remaining = openTabs.filter(tab => tab.path !== path);
       const prev = remaining[remaining.length - 1] || { path: '/' };
@@ -58,12 +49,14 @@ const Topbar: React.FC = () => {
           return (
             <div
               key={tab.path}
-              className={`relative flex items-center px-4 py-2 mr-2 cursor-pointer select-none
-                ${active
-                  ? 'text-gray-900 border-b-2 border-gray-900'
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200'}
-              `}
               onClick={() => handleSelect(tab.path)}
+              className={`
+                relative flex items-center px-4 py-2 mr-2 cursor-pointer select-none
+                border-b-2
+                ${active
+                  ? 'text-gray-900 border-gray-900'
+                  : 'text-gray-600 border-transparent hover:text-gray-800 hover:bg-gray-200'}
+              `}
             >
               <span className="pr-4">{tab.label}</span>
               {tab.path !== '/' && (

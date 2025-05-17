@@ -19,7 +19,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isActive, setIsActive] = useState<string>('');
   const [openTabs, setOpenTabs] = useState<Tab[]>([
-    { label: 'Начальная страница', path: '/' },
+    {label: "Начальная страница", path: "/"}
   ]);
 
   const openTab = (label: string, path: string) => {

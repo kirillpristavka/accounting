@@ -5,6 +5,7 @@ import { AppProvider } from './context/AppContext';
 import MainPage from './pages/MainPage';
 import Topbar from './components/Topbar';
 import OrganizationsPage from './pages/OrganizationsPage';
+import OrganizationCreatePage from './pages/OrganizationCreatePage';
 
 const App: React.FC = () => (
   <AppProvider>
@@ -17,6 +18,7 @@ const App: React.FC = () => (
             <Route path="/" />
             <Route path="/main" element={<MainPage />} />
             <Route path="/organizations" element={<OrganizationsPage />} />
+            <Route path="/organizations/create" element={<OrganizationCreatePage />} />
             <Route path="/manager" element={<h1 className="text-2xl font-semibold">Руководителю</h1>} />
             <Route path="/bank-cash" element={<h1 className="text-2xl font-semibold">Банк и касса</h1>} />
             <Route path="/sales" element={<h1 className="text-2xl font-semibold">Продажи</h1>} />
