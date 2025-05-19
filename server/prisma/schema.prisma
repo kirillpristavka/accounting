@@ -1,0 +1,37 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum OrgType {
+  PHYSICAL
+  LEGAL
+}
+
+enum PhysicalType {
+  SELF_EMPLOYED
+  IP
+}
+
+model Organization {
+  id           Int            @id @default(autoincrement())
+  type         OrgType
+  physicalType PhysicalType?
+  name         String
+  prefix       String?
+  inn          String?
+  taxation     String?
+  selfEmployed SelfEmployed?
+}
+
+model SelfEmployed {
+  orgId      Int    @id
+  lastName   String
+  firstName  String
+  middleName String?
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+}

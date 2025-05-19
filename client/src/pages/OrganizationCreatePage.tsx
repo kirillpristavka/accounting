@@ -14,6 +14,10 @@ import {
   Archive
 } from 'lucide-react';
 
+import axios from 'axios';
+
+axios.defaults.baseURL = 'http://localhost:4000'; // если нужно
+
 const tabs = [
   'Основное',
   'Подразделения',
@@ -35,6 +39,10 @@ const OrganizationCreatePage: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [middleName, setMiddleName] = useState('');
 
+  // 2. Состояния для префикса и ИНН
+  const [prefix, setPrefix] = useState('');
+  const [inn, setInn] = useState('');
+
   // 2. Считаем полное имя
   const fullName = [lastName, firstName, middleName].filter(Boolean).join(' ');
 
@@ -48,6 +56,34 @@ const OrganizationCreatePage: React.FC = () => {
     'Только патент' |
     'Общая'
   >('Налог на профессиональный доход ("самозанятые")');
+
+  const [showPrefixTip, setShowPrefixTip] = useState(false);
+  const [showInnTip, setShowInnTip] = useState(false);
+
+  // 4. Функция сохранения
+  const handleSaveAndClose = async () => {
+    try {
+      await axios.post('/api/organizations', {
+        type: type === 'Физическое лицо' ? 'PHYSICAL' : 'LEGAL',
+        ...(type === 'Физическое лицо' && {
+          physicalType:
+            status === 'Самозанятый' ? 'SELF_EMPLOYED' : 'IP',
+        }),
+        lastName,
+        firstName,
+        middleName,
+        name: fullName,
+        prefix,
+        inn,
+        taxation,
+      });
+      // по успешному сохранению возвращаемся назад
+      navigate(-1);
+    } catch (err) {
+      console.error(err);
+      alert('Ошибка при сохранении организации');
+    }
+  };
 
   return (
     <div className="p-4 bg-gray-50 flex-1 overflow-auto">
@@ -84,7 +120,7 @@ const OrganizationCreatePage: React.FC = () => {
       {/* Панель действий */}
       <div className="flex items-center mb-6 space-x-2">
         <button
-          onClick={() => {/* здесь можно добавить submit-логику */}}
+          onClick={handleSaveAndClose}
           className="px-3 py-1 bg-yellow-400 text-black font-medium rounded shadow-sm hover:bg-yellow-500"
         >
           Записать и закрыть
@@ -201,24 +237,64 @@ const OrganizationCreatePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Префикс и ИНН */}
-        
-        <div>
+        {/* Префикс */}
+        <div className="relative">
           <label className="block text-sm font-medium mb-1">Префикс:</label>
           <div className="flex items-center">
-            <input type="text" className="border px-2 py-1 rounded" />
-            <span className="text-blue-600 ml-2 cursor-pointer">?</span>
+            <input
+              type="text"
+              className="border px-2 py-1 rounded"
+              value={prefix}
+              onChange={e => setPrefix(e.target.value)}
+            />
+            <button
+              type="button"
+              className="ml-2 text-blue-600 hover:text-blue-800"
+              onClick={() => setShowPrefixTip(v => !v)}
+            >
+              ?
+            </button>
           </div>
+          {showPrefixTip && (
+            <div className="absolute top-full left-0 mt-2 w-80 bg-yellow-100 border border-gray-300 p-3 text-sm text-gray-800 rounded shadow-lg z-10">
+              <p>
+                Префикс включается в состав номера документа. В случае ведения учёта по 
+                нескольким организациям позволяет нумеровать документы по каждой 
+                организации в отдельности. Состоит из 2 символов (букв, цифр).
+              </p>
+            </div>
+          )}
         </div>
 
-        <div>
+        {/* ИНН */}
+        <div className="relative">
           <label className="block text-sm font-medium mb-1">ИНН:</label>
           <div className="flex items-center">
-            <input type="text" className="border px-2 py-1 rounded" />
-            <span className="text-blue-600 ml-2 cursor-pointer">?</span>
+            <input
+              type="text"
+              className="border px-2 py-1 rounded"
+              placeholder="ИНН"
+              value={inn}
+              onChange={e => setInn(e.target.value)}
+            />
+            <button
+              type="button"
+              className="ml-2 text-blue-600 hover:text-blue-800"
+              onClick={() => setShowInnTip(v => !v)}
+            >
+              ?
+            </button>
           </div>
-        </div>
-        
+          {showInnTip && (
+            <div className="absolute top-full left-0 mt-2 w-96 bg-yellow-100 border border-gray-300 p-3 text-sm text-gray-800 rounded shadow-lg z-10">
+              <p>
+                Идентификационный номер налогоплательщика (ИНН) из “Листа записи 
+                Единого государственного реестра индивидуальных предпринимателей”. 
+                Состоит из 12 цифр.
+              </p>
+            </div>
+          )}
+        </div>       
 
         {/* Налогообложение */}
         <div>
@@ -255,19 +331,20 @@ const OrganizationCreatePage: React.FC = () => {
           <summary className="text-green-600 cursor-pointer">
             Основной банковский счет
           </summary>
-          <div className="grid grid-cols-2 gap-4 mt-2">
+          <div className="grid gap-4 mt-2">
             <div>
               <label className="block text-sm font-medium mb-1">Банк:</label>
-              <select className="w-full border px-2 py-1 rounded">
-                <option disabled selected>БИК или наименование</option>
-                {/* …опции банка… */}
-              </select>
+              <input
+                type="text"
+                className="w-sm border px-2 py-1 rounded"
+                placeholder="БИК или наименование"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Номер счета:</label>
               <input
                 type="text"
-                className="w-full border px-2 py-1 rounded"
+                className="w-sm border px-2 py-1 rounded"
                 placeholder="Номер счета"
               />
             </div>
