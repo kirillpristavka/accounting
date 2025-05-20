@@ -5,7 +5,6 @@ import { useAppContext } from '../context/AppContext';
 
 const routeNames: Record<string, string> = {
   '/': 'Начальная страница',
-  '/main': 'Главное',
   '/organizations': 'Организации',
   '/organizations/create': 'Организация (создание)',
   // …добавьте при необходимости остальные пути…
