@@ -6,7 +6,7 @@ const MainPage: React.FC = () => {
   const { isActive, setIsActive } = useAppContext();  
 
   return (
-  <div className="">
+  <div className="p-2">
       <h1 className="text-2xl font-semibold mb-4">Главное</h1>
       <ul>
         <li>
@@ -16,6 +16,15 @@ const MainPage: React.FC = () => {
             className="text-blue-600 hover:underline"
           >
             Организации
+          </Link>
+        </li>
+        <li>
+          <Link
+            to="/nomenclature"
+            onClick={() => {setIsActive("")}}
+            className="text-blue-600 hover:underline"
+          >
+            Номенклатура
           </Link>
         </li>
       </ul>
