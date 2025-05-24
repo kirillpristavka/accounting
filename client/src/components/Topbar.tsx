@@ -7,13 +7,18 @@ const routeNames: Record<string, string> = {
   '/': 'Начальная страница',
   '/organizations': 'Организации',
   '/organizations/create': 'Организация (создание)',
+  '/nomenclature': 'Номенклатура',
+  '/nomenclature/create': 'Номенклатура (создание)',
   // …добавьте при необходимости остальные пути…
 };
+
+
 
 const Topbar: React.FC = () => {
   const { openTabs, openTab, closeTab } = useAppContext();
   const location = useLocation();
   const navigate = useNavigate();
+  const { isActive, setIsActive } = useAppContext();
 
   // Авто‑открытие вкладки при смене URL
   useEffect(() => {
@@ -27,6 +32,7 @@ const Topbar: React.FC = () => {
   const handleSelect = (path: string) => {
     if (location.pathname !== path) {
       navigate(path);
+      setIsActive("");
     }
   };
 

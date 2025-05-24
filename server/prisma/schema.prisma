@@ -35,3 +35,20 @@ model SelfEmployed {
   middleName String?
   organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 }
+
+model Nomenclature {
+  id           Int     @id @default(autoincrement())
+  type         String
+  name         String
+  fullName     String?
+  marking      String?
+  article      String?
+  group        String?
+  unit         String
+  vat          String?
+  country      String?
+  manufacturer String?
+  comment      String?
+  hideInLists  Boolean @default(false)
+  // ...другие поля и даты, если нужно
+}

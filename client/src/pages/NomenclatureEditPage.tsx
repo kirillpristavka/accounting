@@ -1,6 +1,6 @@
-// src/pages/NomenclatureCreatePage.tsx
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+// src/pages/NomenclatureEditPage.tsx
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import {
   ChevronLeft,
@@ -39,11 +39,32 @@ const nomenclatureTypes = [
   'Услуги',
 ];
 
-export const NomenclatureCreatePage: React.FC = () => {
+interface NomenclatureItem {
+  id: number;
+  type: string;
+  name: string;
+  fullName: string;
+  marking: string;
+  article: string;
+  group: string;
+  unit: string;
+  vat: string;
+  country: string;
+  manufacturer: string;
+  comment: string;
+  hideInLists: boolean;
+}
+
+const NomenclatureEditPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
 
-  // Состояния для полей
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // form fields
   const [type, setType] = useState('');
   const [name, setName] = useState('');
   const [fullName, setFullName] = useState('');
@@ -57,10 +78,35 @@ export const NomenclatureCreatePage: React.FC = () => {
   const [comment, setComment] = useState('');
   const [hideInLists, setHideInLists] = useState(false);
 
-  // Сохранение
+  useEffect(() => {
+    if (!id) return;
+    axios.get<NomenclatureItem>(`/api/nomenclature/${id}`)
+      .then(res => {
+        const d = res.data;
+        setType(d.type);
+        setName(d.name);
+        setFullName(d.fullName);
+        setMarking(d.marking);
+        setArticle(d.article);
+        setGroup(d.group);
+        setUnit(d.unit);
+        setVat(d.vat);
+        setCountry(d.country);
+        setManufacturer(d.manufacturer);
+        setComment(d.comment);
+        setHideInLists(d.hideInLists);
+      })
+      .catch(() => {
+        setError('Не удалось загрузить номенклатуру');
+      })
+      .finally(() => setLoading(false));
+  }, [id]);
+
   const handleSaveAndClose = async () => {
+    if (!id) return;
+    setSaving(true);
     try {
-      await axios.post('/api/nomenclature', {
+      await axios.put(`/api/nomenclature/${id}`, {
         type,
         name,
         fullName,
@@ -75,11 +121,15 @@ export const NomenclatureCreatePage: React.FC = () => {
         hideInLists,
       });
       navigate(-1);
-    } catch (err) {
-      console.error(err);
-      alert('Ошибка при сохранении номенклатуры');
+    } catch {
+      alert('Ошибка при сохранении');
+    } finally {
+      setSaving(false);
     }
   };
+
+  if (loading) return <div className="p-4">Загрузка…</div>;
+  if (error) return <div className="p-4 text-red-600">{error}</div>;
 
   return (
     <div className="p-4 flex-1">
@@ -94,10 +144,10 @@ export const NomenclatureCreatePage: React.FC = () => {
         <button className="p-2 bg-white border rounded">
           <Star size={16} />
         </button>
-        <h1 className="text-xl font-semibold ml-2">Номенклатура (создание)</h1>
+        <h1 className="text-xl font-semibold ml-2">Редактировать номенклатуру</h1>
       </div>
 
-      {/* Внутренние вкладки */}
+      {/* Вкладки */}
       <nav className="flex flex-nowrap space-x-4 border-b border-gray-200 mb-6 overflow-x-auto">
         {tabLabels.map((label, idx) => (
           <button
@@ -119,17 +169,22 @@ export const NomenclatureCreatePage: React.FC = () => {
         <div className="flex items-center mb-6 space-x-2">
           <button
             onClick={handleSaveAndClose}
-            className="py-1 px-3 bg-yellow-400 text-black font-medium rounded hover:bg-yellow-500"
+            disabled={saving}
+            className="px-3 py-1 bg-yellow-400 text-black font-medium rounded hover:bg-yellow-500 disabled:opacity-50"
           >
             Записать и закрыть
           </button>
-          <button onClick={handleSaveAndClose} className="py-1 px-3 bg-white border rounded flex items-center hover:bg-gray-100">
+          <button
+            onClick={handleSaveAndClose}
+            disabled={saving}
+            className="px-3 py-1 bg-white border rounded flex items-center hover:bg-gray-100 disabled:opacity-50"
+          >
             <Save size={16} className="mr-1" /> Записать
           </button>
-          <button className="p-2 bg-white border rounded hover:bg-gray-100"><List size={16}/></button>
-          <button className="p-2 bg-white border rounded hover:bg-gray-100"><Paperclip size={16}/></button>
-          <button className="p-2 bg-white border rounded hover:bg-gray-100"><Printer size={16}/></button>
-          <button className="flex items-center py-1 px-2 bg-white border rounded hover:bg-gray-100">
+          <button className="p-2 bg-white border rounded hover:bg-gray-100"><List size={16} /></button>
+          <button className="p-2 bg-white border rounded hover:bg-gray-100"><Paperclip size={16} /></button>
+          <button className="p-2 bg-white border rounded hover:bg-gray-100"><Printer size={16} /></button>
+          <button className="flex items-center px-2 py-1 bg-white border rounded hover:bg-gray-100">
             Печать <ChevronDown size={16} className="ml-1" />
           </button>
         </div>
@@ -139,7 +194,7 @@ export const NomenclatureCreatePage: React.FC = () => {
       <div className="bg-white border rounded p-4 space-y-6 w-full">
         {activeTab === 0 ? (
           <div className="max-w-2xl space-y-4">
-            {/** Вид номенклатуры **/}
+            {/* Вид номенклатуры */}
             <div className="flex items-center space-x-4">
               <label className="w-1/3 text-sm font-medium">Вид номенклатуры:</label>
               <select
@@ -154,7 +209,7 @@ export const NomenclatureCreatePage: React.FC = () => {
               </select>
             </div>
 
-            {/** Наименование **/}
+            {/* Наименование */}
             <div className="flex items-center space-x-4">
               <label className="w-1/3 text-sm font-medium">Наименование:</label>
               <input
@@ -165,7 +220,7 @@ export const NomenclatureCreatePage: React.FC = () => {
               />
             </div>
 
-            {/** Полное наименование **/}
+            {/* Полное наименование */}
             <div className="flex items-start space-x-4">
               <label className="w-1/3 pt-2 text-sm font-medium">Полное наименование:</label>
               <textarea
@@ -176,7 +231,7 @@ export const NomenclatureCreatePage: React.FC = () => {
               />
             </div>
 
-            {/** Вид маркировки **/}
+            {/* Вид маркировки */}
             <div className="flex items-center space-x-4">
               <label className="w-1/3 text-sm font-medium">Вид маркировки:</label>
               <select
@@ -188,7 +243,7 @@ export const NomenclatureCreatePage: React.FC = () => {
               </select>
             </div>
 
-            {/** Артикул **/}
+            {/* Артикул */}
             <div className="flex items-center space-x-4">
               <label className="w-1/3 text-sm font-medium">Артикул:</label>
               <input
@@ -199,7 +254,7 @@ export const NomenclatureCreatePage: React.FC = () => {
               />
             </div>
 
-            {/** Входит в группу **/}
+            {/* Входит в группу */}
             <div className="flex items-center space-x-4">
               <label className="w-1/3 text-sm font-medium">Входит в группу:</label>
               <select
@@ -211,7 +266,7 @@ export const NomenclatureCreatePage: React.FC = () => {
               </select>
             </div>
 
-            {/** Единица **/}
+            {/* Единица */}
             <div className="flex items-center space-x-4">
               <label className="w-1/3 text-sm font-medium">Единица:</label>
               <select
@@ -223,7 +278,7 @@ export const NomenclatureCreatePage: React.FC = () => {
               </select>
             </div>
 
-            {/** % НДС **/}
+            {/* % НДС */}
             <div className="flex items-center space-x-4">
               <label className="w-1/3 text-sm font-medium">% НДС:</label>
               <select
@@ -235,7 +290,7 @@ export const NomenclatureCreatePage: React.FC = () => {
               </select>
             </div>
 
-            {/** Страна происхождения **/}
+            {/* Страна происхождения */}
             <div className="flex items-center space-x-4">
               <label className="w-1/3 text-sm font-medium">Страна происхождения:</label>
               <select
@@ -247,7 +302,7 @@ export const NomenclatureCreatePage: React.FC = () => {
               </select>
             </div>
 
-            {/** Производитель **/}
+            {/* Производитель */}
             <div className="flex items-center space-x-4">
               <label className="w-1/3 text-sm font-medium">Производитель:</label>
               <select
@@ -259,7 +314,7 @@ export const NomenclatureCreatePage: React.FC = () => {
               </select>
             </div>
 
-            {/** Комментарий **/}
+            {/* Комментарий */}
             <div className="flex items-center space-x-4">
               <label className="w-1/3 text-sm font-medium">Комментарий:</label>
               <input
@@ -270,7 +325,7 @@ export const NomenclatureCreatePage: React.FC = () => {
               />
             </div>
 
-            {/** Скрывать в списках **/}
+            {/* Скрывать в списках */}
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
@@ -302,4 +357,4 @@ export const NomenclatureCreatePage: React.FC = () => {
   );
 };
 
-export default NomenclatureCreatePage;
+export default NomenclatureEditPage;
