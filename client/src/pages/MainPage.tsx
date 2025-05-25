@@ -1,35 +1,122 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+// src/pages/MainPage.tsx
+import React, { useEffect, useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { FiSettings, FiX } from 'react-icons/fi';
 import { useAppContext } from '../context/AppContext';
 
 const MainPage: React.FC = () => {
-  const { isActive, setIsActive } = useAppContext();  
+  const [search, setSearch] = useState('');
+  const navigate = useNavigate();
+  const { isActive, setIsActive, setAllowOverflow } = useAppContext();
+
+  const clearSearch = () => setSearch('');
+  const closePage = () => {
+    navigate('/');
+    setIsActive("");
+  }
+
+  useEffect(() => {
+    setAllowOverflow(true)              // включаем overflow-visible
+    return () => { setAllowOverflow(false) }  // по уходу – возвращаем обратно
+  }, [])
 
   return (
-  <div className="p-2">
-      <h1 className="text-2xl font-semibold mb-4">Главное</h1>
-      <ul>
-        <li>
-          <Link
-            to="/organizations"
-            onClick={() => {setIsActive("")}}
-            className="text-blue-600 hover:underline"
+    <div className="flex-1 relative z-20 -mt-9 bg-white min-h-screen overflow-visible">
+      <div className="absolute top-6 right-6 flex items-center space-x-3">
+        <div className="relative">
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Поиск (Ctrl+F)"
+            className="border border-gray-300 rounded text-base py-1 pl-3 pr-8 focus:outline-none"
+          />
+          {search && (
+            <button
+              onClick={clearSearch}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-base"
+              title="Очистить поиск"
+            >
+              <FiX />
+            </button>
+          )}
+        </div>
+        <FiSettings
+          className="w-5 h-5 cursor-pointer"
+          title="Настройки"
+        />
+        <FiX
+          className="w-5 h-5 cursor-pointer"
+          title="Закрыть"
+          onClick={closePage}
+        />
+      </div>
+
+      {/* Само меню с пунктами  
+          Отступ сверху mt-16 (4rem) — чтобы меню не попало под абсолютный поиск */}
+      <div className="p-6 pt-16 flex gap-x-10">
+        {/* Левая колонка */}
+        <div className="">
+          <h2 className="text-[#259e00] text-base mb-2">Взаимодействие</h2>
+          <NavLink to="/mail" className="block text-sm pl-4 mb-1">Почта</NavLink>
+
+          <h2 className="text-[#259e00] text-base mt-4 mb-2">Единый налоговый счет</h2>
+          <NavLink to="/ens/calculations" className="block text-sm pl-4 mb-1">Расчеты по ЕНС</NavLink>
+          <NavLink to="/ens/taxes" className="block text-sm pl-4 mb-1">Расчеты по налогам на ЕНС</NavLink>
+          <NavLink to="/ens/cabinet" className="block text-sm pl-4 mb-1">Личный кабинет ЕНС</NavLink>
+
+          <h2 className="text-[#259e00] text-base mt-4 mb-2">Мобильные приложения</h2>
+          <NavLink to="/apps/scanner" className="block text-sm pl-4 mb-1">1С:Сканер чеков</NavLink>
+
+          <h2 className="text-[#259e00] text-base mt-4 mb-2">Операции</h2>
+          <NavLink to="/operations/create" className="block text-sm pl-4 mb-1">Ввести хозяйственную операцию</NavLink>
+
+          <h2 className="text-[#259e00] text-base mt-4 mb-2">Сервисы</h2>
+          <NavLink to="/services/1cplus" className="block text-sm pl-4 mb-1">1С:Плюс</NavLink>
+
+          <h2 className="text-[#259e00] text-base mt-4 mb-2">Задачи</h2>
+          <NavLink to="/tasks/org" className="block text-sm pl-4 mb-1">Задачи организации</NavLink>
+          <NavLink to="/tasks/my" className="block text-sm pl-4 mb-1">Мои задачи</NavLink>
+        </div>
+
+        {/* Правая колонка */}
+        <div className="">
+          <h2 className="text-[#259e00] text-base mb-2">Настройки</h2>
+          <NavLink to="/settings/functionality" className="block text-sm pl-4 mb-1">Функциональность</NavLink>
+          <NavLink onClick={() => setIsActive("")} to="/organizations" className="block text-sm pl-4 mb-1">Организации</NavLink>
+          <NavLink to="/settings/egrul" className="block text-sm pl-4 mb-1">Внесение изменений в ЕГРЮЛ, ЕГРИП</NavLink>
+          <NavLink to="/settings/taxes" className="block text-sm pl-4 mb-1">Налоги и отчеты</NavLink>
+          <NavLink to="/settings/accounting" className="block text-sm pl-4 mb-1">Учетная политика</NavLink>
+          <NavLink to="/settings/chartofaccounts" className="block text-sm pl-4 mb-1">План счетов</NavLink>
+          <NavLink to="/settings/personal" className="block text-sm pl-4 mb-1">Персональные настройки</NavLink>
+
+          <h2 className="text-[#259e00] text-base mt-4 mb-2">Начало работы</h2>
+          <NavLink
+            to="/onboarding/helpers"
+            end
+            className={({ isActive }) =>
+              `block text-sm pl-4 mb-1 ${
+                isActive
+                  ? 'border border-dashed border-gray-400 rounded px-1 py-0.5'
+                  : ''
+              }`
+            }
           >
-            Организации
-          </Link>
-        </li>
-        <li>
-          <Link
-            to="/nomenclature"
-            onClick={() => {setIsActive("")}}
-            className="text-blue-600 hover:underline"
-          >
-            Номенклатура
-          </Link>
-        </li>
-      </ul>
+            Помощник ввода остатков
+          </NavLink>
+          <NavLink to="/onboarding/load7" className="block text-sm pl-4 mb-1">Загрузка из 1С:Предприятия 7.7</NavLink>
+          <NavLink to="/onboarding/loadreports" className="block text-sm pl-4 mb-1">Загрузка из 1С:Отчетность предпринимателя</NavLink>
+
+          <h2 className="text-[#259e00] text-base mt-4 mb-2">Информация</h2>
+          <NavLink to="/info/allnews" className="block text-sm pl-4 mb-1">Все новости</NavLink>
+          <NavLink to="/info/updates" className="block text-sm pl-4 mb-1">Обновления</NavLink>
+          <NavLink to="/info/about" className="block text-sm pl-4 mb-1">Знакомство с программой</NavLink>
+          <NavLink to="/info/additional" className="block text-sm pl-4 mb-1">Дополнительная информация</NavLink>
+          <NavLink to="/info/news" className="block text-sm pl-4 mb-1">Новости</NavLink>
+        </div>
+      </div>
     </div>
-  ) 
+  );
 };
 
 export default MainPage;

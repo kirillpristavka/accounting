@@ -75,7 +75,7 @@ const NomenclaturePage: React.FC = () => {
   };
 
   return (
-    <div className="p-2 flex-1">
+    <div className="p-4 flex-1">
       {/* Хлебные крошки / заголовок */}
       <div className="flex items-center mb-4 space-x-2">
         <button onClick={() => navigate(-1)} className="p-2 bg-white border rounded">
@@ -150,7 +150,7 @@ const NomenclaturePage: React.FC = () => {
               className="p-2 bg-white border rounded hover:bg-gray-100 disabled:opacity-50"
               title="Удалить выбранную запись"
             >
-              <Trash2 size={16} className={selectedId ? 'text-red-600' : 'text-gray-400'} />
+              <Trash2 size={16} className={selectedId ? 'text-red-600' : 'text-gray-600'} />
             </button>
             <div className="flex items-center ml-auto space-x-1">
               <div className="relative">

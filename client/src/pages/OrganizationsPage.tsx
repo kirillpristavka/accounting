@@ -8,16 +8,13 @@ import {
   Mail,
   List,
   Paperclip,
-  Archive
+  Archive,
+  Plus,
+  Trash2
 } from 'lucide-react';
 
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-
-import {
-  FaRegTrashAlt,     // FontAwesome (контурная корзина)
-  FaPlus
-} from 'react-icons/fa';
 
 interface Organization {
   id: number;
@@ -68,7 +65,7 @@ const OrganizationsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 bg-gray-50 flex-1">
+    <div className="p-4 flex-1">
       {/* Header */}
       <div className="flex items-center mb-4 space-x-2">
         <button onClick={() => {navigate(-1)}} className="p-2 bg-white border rounded">
@@ -87,24 +84,18 @@ const OrganizationsPage: React.FC = () => {
       <div className="flex items-center mb-4 space-x-2">
         <button
           onClick={() => navigate('/organizations/create')}
-          className="p-2 bg-white border border-green-600 rounded hover:bg-gray-100 text-green-600 flex items-center gap-2"
+          className="px-3 py-1 bg-white border rounded hover:bg-gray-100 flex items-center"
         >
-          <FaPlus size={16} className="text-green-600" />
+          <Plus size={16} className="mr-1" />
           Создать
         </button>
         <button
           onClick={handleDelete}
           disabled={!selectedId}
           title="Удалить выбранную организацию"
-          className={`
-            p-2 rounded hover:bg-gray-100 disabled:opacity-50
-            ${selectedId 
-              ? 'border border-red-600'   // красная, более жирная рамка
-              : 'border border-gray-300'     // обычная серая тонкая рамка
-            }
-          `}
+          className={"p-2 rounded hover:bg-gray-100 disabled:opacity-50 border"}
         >
-          <FaRegTrashAlt
+          <Trash2
             size={16}
             className={selectedId ? 'text-red-600' : 'text-gray-600'}
           />

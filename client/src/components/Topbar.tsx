@@ -47,7 +47,7 @@ const Topbar: React.FC = () => {
   };
 
   return (
-    <header className="w-full bg-gray-100 border-b border-gray-200">
+    <header className="relative z-10 w-full bg-gray-100 border-b border-gray-200">
       <nav className="flex">
         {openTabs.map(tab => {
           const active = location.pathname === tab.path;
