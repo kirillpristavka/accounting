@@ -10,6 +10,8 @@ import OrganizationCreatePage from './pages/OrganizationCreatePage';
 import NomenclaturePage from './pages/NomenclaturePage';
 import NomenclatureCreatePage from './pages/NomenclatureCreatePage';
 import NomenclatureEditPage from './pages/NomenclatureEditPage';
+import ReferencesPage from './pages/ReferencesPage';
+import OrganizationEditPage from './pages/OrganizationEditPage';
 
 const AppLayout: React.FC = () => {
   const { allowOverflow } = useAppContext();
@@ -30,9 +32,11 @@ const AppLayout: React.FC = () => {
             <Route path="/main" element={<MainPage />} />
             <Route path="/organizations" element={<OrganizationsPage />} />
             <Route path="/organizations/create" element={<OrganizationCreatePage />} />
+            <Route path="/organizations/:id/edit" element={<OrganizationEditPage />} />
             <Route path="/nomenclature" element={<NomenclaturePage />} />
             <Route path="/nomenclature/create" element={<NomenclatureCreatePage />} />
             <Route path="/nomenclature/:id/edit" element={<NomenclatureEditPage />} />
+            <Route path="/references" element={<ReferencesPage />} />
           </Routes>
         </main>
       </div>

@@ -1,20 +1,19 @@
 // src/pages/OrganizationsPage.tsx
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import {
   ChevronLeft,
   ChevronRight,
   Star,
+  Plus,
+  Trash2,
   FileText,
   Mail,
-  List,
+  List as ListIcon,
   Paperclip,
   Archive,
-  Plus,
-  Trash2
 } from 'lucide-react';
-
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 
 interface Organization {
   id: number;
@@ -30,7 +29,6 @@ const OrganizationsPage: React.FC = () => {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
-  // ID выбранной строки
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -54,9 +52,7 @@ const OrganizationsPage: React.FC = () => {
 
     try {
       await axios.delete(`/api/organizations/${selectedId}`);
-      setOrganizations(orgs =>
-        orgs.filter(o => o.id !== selectedId)
-      );
+      setOrganizations((prev) => prev.filter((o) => o.id !== selectedId));
       setSelectedId(null);
     } catch (err) {
       console.error(err);
@@ -68,10 +64,10 @@ const OrganizationsPage: React.FC = () => {
     <div className="p-4 flex-1">
       {/* Header */}
       <div className="flex items-center mb-4 space-x-2">
-        <button onClick={() => {navigate(-1)}} className="p-2 bg-white border rounded">
+        <button onClick={() => navigate(-1)} className="p-2 bg-white border rounded">
           <ChevronLeft size={16} />
         </button>
-        <button onClick={() => {navigate(+1)}} className="p-2 bg-white border rounded">
+        <button onClick={() => navigate(+1)} className="p-2 bg-white border rounded">
           <ChevronRight size={16} />
         </button>
         <button className="p-2 bg-white border rounded">
@@ -86,33 +82,32 @@ const OrganizationsPage: React.FC = () => {
           onClick={() => navigate('/organizations/create')}
           className="px-3 py-1 bg-white border rounded hover:bg-gray-100 flex items-center"
         >
-          <Plus size={16} className="mr-1" />
-          Создать
+          <Plus size={16} className="mr-1" /> Создать
         </button>
         <button
           onClick={handleDelete}
           disabled={!selectedId}
           title="Удалить выбранную организацию"
-          className={"p-2 rounded hover:bg-gray-100 disabled:opacity-50 border"}
+          className="p-2 rounded border hover:bg-gray-100 disabled:opacity-50"
         >
           <Trash2
             size={16}
             className={selectedId ? 'text-red-600' : 'text-gray-600'}
           />
         </button>
-        <button className="p-2 bg-white border rounded">
+        <button className="p-2 bg-white border rounded hover:bg-gray-100">
           <FileText size={16} />
         </button>
-        <button className="p-2 bg-white border rounded">
+        <button className="p-2 bg-white border rounded hover:bg-gray-100">
           <Mail size={16} />
         </button>
-        <button className="p-2 bg-white border rounded">
-          <List size={16} />
+        <button className="p-2 bg-white border rounded hover:bg-gray-100">
+          <ListIcon size={16} />
         </button>
-        <button className="p-2 bg-white border rounded">
+        <button className="p-2 bg-white border rounded hover:bg-gray-100">
           <Paperclip size={16} />
         </button>
-        <button className="p-2 bg-white border rounded">
+        <button className="p-2 bg-white border rounded hover:bg-gray-100">
           <Archive size={16} />
         </button>
       </div>
@@ -134,13 +129,16 @@ const OrganizationsPage: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {organizations.map(org => {
+              {organizations.map((org) => {
                 const isActive = org.id === selectedId;
                 return (
                   <tr
                     key={org.id}
                     onClick={() =>
-                      setSelectedId(prev => (prev === org.id ? null : org.id))
+                      setSelectedId((prev) => (prev === org.id ? null : org.id))
+                    }
+                    onDoubleClick={() =>
+                      navigate(`/organizations/${org.id}/edit`)
                     }
                     className={`
                       cursor-pointer

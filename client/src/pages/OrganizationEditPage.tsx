@@ -1,68 +1,101 @@
-// src/pages/OrganizationCreatePage.tsx
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+// src/pages/OrganizationEditPage.tsx
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import {
   ChevronLeft,
   ChevronRight,
   Star,
-  X,          // <-- импортируем иконку X
+  X,
   ChevronDown,
   Save,
   FileText,
   Mail,
   List,
   Paperclip,
-  Archive
+  Archive,
 } from 'lucide-react';
-import { useOrgFormStore } from '../stores/useOrganizationCreate';
 
 axios.defaults.baseURL = 'http://localhost:4000';
 
+// Названия вкладок совпадают с OrganizationCreatePage
 const tabLabels = [
   'Основное',
   'Подразделения',
   'Банковские счета',
-  'Учетная политика',
+  'Учётная политика',
   'Лимиты остатка кассы',
   'Регистрации в налоговых органах',
 ];
 
-const OrganizationCreatePage: React.FC = () => {
+interface OrganizationItem {
+  id: number;
+  type: 'PHYSICAL' | 'LEGAL';
+  physicalType?: 'SELF_EMPLOYED' | 'IP';
+  lastName: string;
+  firstName: string;
+  middleName: string;
+  name: string;
+  prefix: string;
+  inn: string;
+  taxation: string;
+}
+
+const OrganizationEditPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Zustand-стор для формы
-  const {
-    type,
-    status,
-    lastName,
-    firstName,
-    middleName,
-    prefix,
-    inn,
-    taxation,
-    showPrefixTip,
-    showInnTip,
-    setType,
-    setStatus,
-    setLastName,
-    setFirstName,
-    setMiddleName,
-    setPrefix,
-    setInn,
-    setTaxation,
-    setShowPrefixTip,
-    setShowInnTip,
-  } = useOrgFormStore();
+  // Поля формы
+  const [type, setType] = useState<'Физическое лицо' | 'Юридическое лицо'>('Физическое лицо');
+  const [status, setStatus] = useState<'Самозанятый' | 'ИП'>('Самозанятый');
+  const [lastName, setLastName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [middleName, setMiddleName] = useState('');
+  const [prefix, setPrefix] = useState('');
+  const [inn, setInn] = useState('');
+  const [taxation, setTaxation] = useState('');
+  const [showPrefixTip, setShowPrefixTip] = useState(false);
+  const [showInnTip, setShowInnTip] = useState(false);
 
-  // Собираем полное имя на лету
+  // Собираем полное ФИО «на лету»
   const fullName = [lastName, firstName, middleName].filter(Boolean).join(' ');
 
-  // Отправка формы на сервер
+  useEffect(() => {
+    if (!id) return;
+    axios
+      .get<OrganizationItem>(`/api/organizations/${id}`)
+      .then((res) => {
+        const d = res.data;
+        // Переводим type/physicalType в русские строки
+        if (d.type === 'PHYSICAL') {
+          setType('Физическое лицо');
+          setStatus(d.physicalType === 'SELF_EMPLOYED' ? 'Самозанятый' : 'ИП');
+        } else {
+          setType('Юридическое лицо');
+        }
+        setLastName(d.lastName || '');
+        setFirstName(d.firstName || '');
+        setMiddleName(d.middleName || '');
+        setPrefix(d.prefix || '');
+        setInn(d.inn || '');
+        setTaxation(d.taxation || '');
+      })
+      .catch(() => {
+        setError('Не удалось загрузить данные организации');
+      })
+      .finally(() => setLoading(false));
+  }, [id]);
+
   const handleSaveAndClose = async () => {
+    if (!id) return;
+    setSaving(true);
     try {
-      await axios.post('/api/organizations', {
+      await axios.put(`/api/organizations/${id}`, {
         type: type === 'Физическое лицо' ? 'PHYSICAL' : 'LEGAL',
         ...(type === 'Физическое лицо' && {
           physicalType: status === 'Самозанятый' ? 'SELF_EMPLOYED' : 'IP',
@@ -79,14 +112,19 @@ const OrganizationCreatePage: React.FC = () => {
     } catch (err) {
       console.error(err);
       alert('Ошибка при сохранении организации');
+    } finally {
+      setSaving(false);
     }
   };
 
+  if (loading) return <div className="p-4">Загрузка…</div>;
+  if (error) return <div className="p-4 text-red-600">{error}</div>;
+
   return (
     <div className="p-4 bg-gray-50 flex-1 overflow-auto">
-      {/* === Навигация и заголовок === */}
+      {/* Навигация и заголовок */}
       <div className="flex justify-between items-center mb-4">
-        {/* Левая группа: Назад/Вперёд/Избранное + заголовок */}
+        {/* Левая часть: «назад», «вперёд», «звёздочка», заголовок */}
         <div className="flex items-center space-x-2">
           <button onClick={() => navigate(-1)} className="p-2 bg-white border rounded">
             <ChevronLeft size={16} />
@@ -97,10 +135,10 @@ const OrganizationCreatePage: React.FC = () => {
           <button className="p-2 bg-white border rounded">
             <Star size={16} />
           </button>
-          <h1 className="text-xl font-semibold ml-2">Организация (создание)</h1>
+          <h1 className="text-xl font-semibold ml-2">Редактировать организацию</h1>
         </div>
 
-        {/* Правая кнопка «Закрыть» (иконка X) без рамки и фона */}
+        {/* Правая часть: кнопка «Закрыть» (иконка X) */}
         <div>
           <button
             onClick={() => navigate(-1)}
@@ -112,7 +150,7 @@ const OrganizationCreatePage: React.FC = () => {
         </div>
       </div>
 
-      {/* === Вкладки === */}
+      {/* Табы (точно те же классы, что и в Create) */}
       <div className="flex space-x-4 border-b border-gray-200 mb-6 pl-2">
         {tabLabels.map((label, idx) => (
           <button
@@ -129,16 +167,21 @@ const OrganizationCreatePage: React.FC = () => {
         ))}
       </div>
 
-      {/* === Тулбар (только для "Основное") === */}
+      {/* Тулбар (только для «Основное») */}
       {activeTab === 0 && (
         <div className="flex items-center mb-6 space-x-2">
           <button
             onClick={handleSaveAndClose}
             className="px-3 py-1 bg-yellow-400 text-black font-medium rounded shadow-sm hover:bg-yellow-500"
+            disabled={saving}
           >
             Записать и закрыть
           </button>
-          <button className="px-3 py-1 bg-white border rounded flex items-center hover:bg-gray-100">
+          <button
+            onClick={handleSaveAndClose}
+            className="px-3 py-1 bg-white border rounded flex items-center hover:bg-gray-100"
+            disabled={saving}
+          >
             <Save size={16} className="mr-1" />
             Записать
           </button>
@@ -163,7 +206,7 @@ const OrganizationCreatePage: React.FC = () => {
         </div>
       )}
 
-      {/* === Контент вкладок === */}
+      {/* Контент вкладок (точно дублируем из Create) */}
       <div className="bg-white border rounded p-4 space-y-6">
         {/* === Вкладка «Основное» === */}
         {activeTab === 0 && (
@@ -175,7 +218,9 @@ const OrganizationCreatePage: React.FC = () => {
                 <select
                   className="w-full border px-2 py-1 rounded"
                   value={type}
-                  onChange={(e) => setType(e.target.value as any)}
+                  onChange={(e) =>
+                    setType(e.target.value as 'Физическое лицо' | 'Юридическое лицо')
+                  }
                 >
                   <option>Физическое лицо</option>
                   <option>Юридическое лицо</option>
@@ -187,7 +232,9 @@ const OrganizationCreatePage: React.FC = () => {
                   <select
                     className="w-full border px-2 py-1 rounded"
                     value={status}
-                    onChange={(e) => setStatus(e.target.value as any)}
+                    onChange={(e) =>
+                      setStatus(e.target.value as 'Самозанятый' | 'ИП')
+                    }
                   >
                     <option>Самозанятый</option>
                     <option>ИП</option>
@@ -281,7 +328,7 @@ const OrganizationCreatePage: React.FC = () => {
               <select
                 className="w-full border px-2 py-1 rounded"
                 value={taxation}
-                onChange={(e) => setTaxation(e.target.value as any)}
+                onChange={(e) => setTaxation(e.target.value)}
               >
                 {status === 'Самозанятый' ? (
                   <option>Налог на профессиональный доход ("самозанятые")</option>
@@ -344,9 +391,9 @@ const OrganizationCreatePage: React.FC = () => {
           <div className="text-gray-600">Раздел «Банковские счета»</div>
         )}
 
-        {/* === Вкладка «Учетная политика» === */}
+        {/* === Вкладка «Учётная политика» === */}
         {activeTab === 3 && (
-          <div className="text-gray-600">Раздел «Учетная политика»</div>
+          <div className="text-gray-600">Раздел «Учётная политика»</div>
         )}
 
         {/* === Вкладка «Лимиты остатка кассы» === */}
@@ -363,4 +410,4 @@ const OrganizationCreatePage: React.FC = () => {
   );
 };
 
-export default OrganizationCreatePage;
+export default OrganizationEditPage;
