@@ -1,7 +1,7 @@
-// src/stores/useOrganizationForm.ts
+// src/stores/useOrganizationCreate.ts
 import { create } from 'zustand';
 
-type Taxation =
+export type Taxation =
   | 'Налог на профессиональный доход ("самозанятые")'
   | 'УСН (доходы)'
   | 'УСН (доходы минус расходы)'
@@ -10,8 +10,8 @@ type Taxation =
   | 'Только патент'
   | 'Общая';
 
-type PhysicalType = 'Самозанятый' | 'ИП';
-type OrgType = 'Физическое лицо' | 'Юридическое лицо';
+export type PhysicalType = 'Самозанятый' | 'ИП';
+export type OrgType = 'Физическое лицо' | 'Юридическое лицо';
 
 interface OrgFormState {
   type: OrgType;
@@ -35,9 +35,13 @@ interface OrgFormState {
   setTaxation: (v: Taxation) => void;
   setShowPrefixTip: (v: boolean) => void;
   setShowInnTip: (v: boolean) => void;
+
+  // Новый метод для сброса всего состояния
+  resetForm: () => void;
 }
 
-export const useOrgFormStore = create<OrgFormState>((set) => ({
+export const useOrganizationCreate = create<OrgFormState>((set) => ({
+  // Исходные (дефолтные) значения
   type: 'Физическое лицо',
   status: 'Самозанятый',
   lastName: '',
@@ -49,7 +53,12 @@ export const useOrgFormStore = create<OrgFormState>((set) => ({
   showPrefixTip: false,
   showInnTip: false,
 
-  setType: (type) => set({ type, status: type === 'Физическое лицо' ? 'Самозанятый' : 'ИП' }),
+  // Сеттеры
+  setType: (type) =>
+    set({
+      type,
+      status: type === 'Физическое лицо' ? 'Самозанятый' : 'ИП',
+    }),
   setStatus: (status) => set({ status }),
   setLastName: (lastName) => set({ lastName }),
   setFirstName: (firstName) => set({ firstName }),
@@ -59,4 +68,19 @@ export const useOrgFormStore = create<OrgFormState>((set) => ({
   setTaxation: (taxation) => set({ taxation }),
   setShowPrefixTip: (showPrefixTip) => set({ showPrefixTip }),
   setShowInnTip: (showInnTip) => set({ showInnTip }),
+
+  // Метод сброса состояния к дефолту
+  resetForm: () =>
+    set({
+      type: 'Физическое лицо',
+      status: 'Самозанятый',
+      lastName: '',
+      firstName: '',
+      middleName: '',
+      prefix: '',
+      inn: '',
+      taxation: 'Налог на профессиональный доход ("самозанятые")',
+      showPrefixTip: false,
+      showInnTip: false,
+    }),
 }));

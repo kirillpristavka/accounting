@@ -1,21 +1,22 @@
 // src/pages/OrganizationCreatePage.tsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import {
   ChevronLeft,
   ChevronRight,
   Star,
-  X,          // <-- импортируем иконку X
+  X,
   ChevronDown,
   Save,
   FileText,
   Mail,
   List,
   Paperclip,
-  Archive
+  Archive,
 } from 'lucide-react';
-import { useOrgFormStore } from '../stores/useOrganizationCreate';
+import { useOrganizationCreate } from '../stores/useOrganizationCreate';
+import { useAppContext } from '../context/AppContext';
 
 axios.defaults.baseURL = 'http://localhost:4000';
 
@@ -30,9 +31,11 @@ const tabLabels = [
 
 const OrganizationCreatePage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { closeTab } = useAppContext();
+
   const [activeTab, setActiveTab] = useState(0);
 
-  // Zustand-стор для формы
   const {
     type,
     status,
@@ -54,12 +57,17 @@ const OrganizationCreatePage: React.FC = () => {
     setTaxation,
     setShowPrefixTip,
     setShowInnTip,
-  } = useOrgFormStore();
+    resetForm,
+  } = useOrganizationCreate();
 
-  // Собираем полное имя на лету
-  const fullName = [lastName, firstName, middleName].filter(Boolean).join(' ');
+  // Собираем «Наименование» как «Фамилия И.О.»
+  const fullName = lastName
+    ? `${lastName.trim()} ${
+        firstName ? firstName.trim()[0].toUpperCase() + '.' : ''
+      }${middleName ? middleName.trim()[0].toUpperCase() + '.' : ''}`
+    : '';
 
-  // Отправка формы на сервер
+  // Отправка формы на сервер и закрытие вкладки
   const handleSaveAndClose = async () => {
     try {
       await axios.post('/api/organizations', {
@@ -75,6 +83,8 @@ const OrganizationCreatePage: React.FC = () => {
         inn,
         taxation,
       });
+      resetForm();
+      closeTab(location.pathname);
       navigate(-1);
     } catch (err) {
       console.error(err);
@@ -82,13 +92,24 @@ const OrganizationCreatePage: React.FC = () => {
     }
   };
 
+  // Нажатие стрелки «Назад» не сбрасывает сто и не закрывает вкладку
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  // Нажатие «Закрыть» (иконка X) сбрасывает сто, закрывает вкладку и уходит назад
+  const handleClose = () => {
+    resetForm();
+    closeTab(location.pathname);
+    navigate(-1);
+  };
+
   return (
     <div className="p-4 bg-gray-50 flex-1 overflow-auto">
-      {/* === Навигация и заголовок === */}
+      {/* Навигация и заголовок */}
       <div className="flex justify-between items-center mb-4">
-        {/* Левая группа: Назад/Вперёд/Избранное + заголовок */}
         <div className="flex items-center space-x-2">
-          <button onClick={() => navigate(-1)} className="p-2 bg-white border rounded">
+          <button onClick={handleBack} className="p-2 bg-white border rounded">
             <ChevronLeft size={16} />
           </button>
           <button className="p-2 bg-white border rounded">
@@ -99,11 +120,9 @@ const OrganizationCreatePage: React.FC = () => {
           </button>
           <h1 className="text-xl font-semibold ml-2">Организация (создание)</h1>
         </div>
-
-        {/* Правая кнопка «Закрыть» (иконка X) без рамки и фона */}
         <div>
           <button
-            onClick={() => navigate(-1)}
+            onClick={handleClose}
             className="p-2 rounded-full hover:bg-gray-100"
             title="Закрыть"
           >
@@ -112,7 +131,7 @@ const OrganizationCreatePage: React.FC = () => {
         </div>
       </div>
 
-      {/* === Вкладки === */}
+      {/* Вкладки */}
       <div className="flex space-x-4 border-b border-gray-200 mb-6 pl-2">
         {tabLabels.map((label, idx) => (
           <button
@@ -129,7 +148,7 @@ const OrganizationCreatePage: React.FC = () => {
         ))}
       </div>
 
-      {/* === Тулбар (только для "Основное") === */}
+      {/* Тулбар (только для «Основное») */}
       {activeTab === 0 && (
         <div className="flex items-center mb-6 space-x-2">
           <button
@@ -163,9 +182,8 @@ const OrganizationCreatePage: React.FC = () => {
         </div>
       )}
 
-      {/* === Контент вкладок === */}
+      {/* Контент вкладок */}
       <div className="bg-white border rounded p-4 space-y-6">
-        {/* === Вкладка «Основное» === */}
         {activeTab === 0 && (
           <>
             {/* Вид и Статус */}
@@ -218,7 +236,7 @@ const OrganizationCreatePage: React.FC = () => {
 
             {/* Автоподставляемое наименование */}
             <div>
-              <label className="block text-sm font-medium mb-1">Наименование:</label>
+              <label className="block текст-sm font-medium mb-1">Наименование:</label>
               <div className={`text-sm ${fullName ? 'text-gray-800' : 'text-red-600'}`}>
                 {fullName || '<Не заполнено ФИО>'}
               </div>
@@ -334,30 +352,11 @@ const OrganizationCreatePage: React.FC = () => {
           </>
         )}
 
-        {/* === Вкладка «Подразделения» === */}
-        {activeTab === 1 && (
-          <div className="text-gray-600">Раздел «Подразделения»</div>
-        )}
-
-        {/* === Вкладка «Банковские счета» === */}
-        {activeTab === 2 && (
-          <div className="text-gray-600">Раздел «Банковские счета»</div>
-        )}
-
-        {/* === Вкладка «Учетная политика» === */}
-        {activeTab === 3 && (
-          <div className="text-gray-600">Раздел «Учетная политика»</div>
-        )}
-
-        {/* === Вкладка «Лимиты остатка кассы» === */}
-        {activeTab === 4 && (
-          <div className="text-gray-600">Раздел «Лимиты остатка кассы»</div>
-        )}
-
-        {/* === Вкладка «Регистрации в налоговых органах» === */}
-        {activeTab === 5 && (
-          <div className="text-gray-600">Раздел «Регистрации в налоговых органах»</div>
-        )}
+        {activeTab === 1 && <div className="text-gray-600">Раздел «Подразделения»</div>}
+        {activeTab === 2 && <div className="text-gray-600">Раздел «Банковские счета»</div>}
+        {activeTab === 3 && <div className="text-gray-600">Раздел «Учетная политика»</div>}
+        {activeTab === 4 && <div className="text-gray-600">Раздел «Лимиты остатка кассы»</div>}
+        {activeTab === 5 && <div className="text-gray-600">Раздел «Регистрации в налоговых органах»</div>}
       </div>
     </div>
   );

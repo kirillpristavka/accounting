@@ -1,6 +1,6 @@
 // src/pages/OrganizationEditPage.tsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import {
   ChevronLeft,
@@ -15,10 +15,12 @@ import {
   Paperclip,
   Archive,
 } from 'lucide-react';
+import { useOrganizationEdit } from '../stores/useOrganizationEdit';
+import type { Taxation } from '../stores/useOrganizationEdit';
+import { useAppContext } from '../context/AppContext';
 
 axios.defaults.baseURL = 'http://localhost:4000';
 
-// Названия вкладок совпадают с OrganizationCreatePage
 const tabLabels = [
   'Основное',
   'Подразделения',
@@ -43,71 +45,134 @@ interface OrganizationItem {
 
 const OrganizationEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const orgId = id ?? '';
   const navigate = useNavigate();
+  const location = useLocation();
+  const { closeTab } = useAppContext();
 
+  const [pageTitle, setPageTitle] = useState('Редактировать организацию');
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Поля формы
-  const [type, setType] = useState<'Физическое лицо' | 'Юридическое лицо'>('Физическое лицо');
-  const [status, setStatus] = useState<'Самозанятый' | 'ИП'>('Самозанятый');
-  const [lastName, setLastName] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [middleName, setMiddleName] = useState('');
-  const [prefix, setPrefix] = useState('');
-  const [inn, setInn] = useState('');
-  const [taxation, setTaxation] = useState('');
-  const [showPrefixTip, setShowPrefixTip] = useState(false);
-  const [showInnTip, setShowInnTip] = useState(false);
+  // Берём весь store-API
+  const {
+    data,
+    initForm,
+    setType,
+    setStatus,
+    setLastName,
+    setFirstName,
+    setMiddleName,
+    setPrefix,
+    setInn,
+    setTaxation,
+    setShowPrefixTip,
+    setShowInnTip,
+    resetForm,
+  } = useOrganizationEdit();
 
-  // Собираем полное ФИО «на лету»
-  const fullName = [lastName, firstName, middleName].filter(Boolean).join(' ');
+  // Если формы для данного orgId ещё нет, будем использовать дефолт
+  const single = data[orgId] ?? {
+    type: 'Физическое лицо',
+    status: 'Самозанятый',
+    lastName: '',
+    firstName: '',
+    middleName: '',
+    prefix: '',
+    inn: '',
+    taxation: 'Налог на профессиональный доход ("самозанятые")',
+    showPrefixTip: false,
+    showInnTip: false,
+  };
 
+  // Собираем «Фамилия И.О.»
+  const fullName = single.lastName
+    ? `${single.lastName.trim()} ${
+        single.firstName ? single.firstName.trim()[0].toUpperCase() + '.' : ''
+      }${single.middleName ? single.middleName.trim()[0].toUpperCase() + '.' : ''}`
+    : '';
+
+  // useEffect: только при изменении orgId (или при инициализации initForm),
+  // но НЕ при каждом переключении activeTab
   useEffect(() => {
-    if (!id) return;
+    if (!orgId) return;
+    // Если мы уже инициализировали data[orgId], не нужно делать это снова:
+    if (data[orgId]) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
     axios
-      .get<OrganizationItem>(`/api/organizations/${id}`)
+      .get<OrganizationItem>(`/api/organizations/${orgId}`)
       .then((res) => {
         const d = res.data;
-        // Переводим type/physicalType в русские строки
-        if (d.type === 'PHYSICAL') {
-          setType('Физическое лицо');
-          setStatus(d.physicalType === 'SELF_EMPLOYED' ? 'Самозанятый' : 'ИП');
+        const orgType = d.type === 'PHYSICAL' ? 'Физическое лицо' : 'Юридическое лицо';
+        const physStatus: 'Самозанятый' | 'ИП' =
+          d.type === 'PHYSICAL'
+            ? d.physicalType === 'SELF_EMPLOYED'
+              ? 'Самозанятый'
+              : 'ИП'
+            : 'ИП';
+
+        // Приводим taxation из API к одному из литералов Taxation
+        const tax: Taxation = (d.taxation as Taxation) ?? 'Налог на профессиональный доход ("самозанятые")';
+
+        // Собираем initialState — именно те поля, которые есть в SingleOrgState
+        const initialState: Partial<typeof single> = {
+          type: orgType,
+          status: physStatus,
+          lastName: d.lastName || '',
+          firstName: d.firstName || '',
+          middleName: d.middleName || '',
+          prefix: d.prefix || '',
+          inn: d.inn || '',
+          taxation: tax,
+          showPrefixTip: false,
+          showInnTip: false,
+        };
+
+        initForm(orgId, initialState);
+
+        // Сразу формируем заголовок точно так же, как в Topbar
+        if (d.lastName) {
+          const fio = `${d.lastName.trim()} ${
+            d.firstName ? d.firstName.trim()[0].toUpperCase() + '.' : ''
+          }${d.middleName ? d.middleName.trim()[0].toUpperCase() + '.' : ''}`;
+          setPageTitle(`${fio} (Организация)`);
         } else {
-          setType('Юридическое лицо');
+          setPageTitle(`Организация #${d.id}`);
         }
-        setLastName(d.lastName || '');
-        setFirstName(d.firstName || '');
-        setMiddleName(d.middleName || '');
-        setPrefix(d.prefix || '');
-        setInn(d.inn || '');
-        setTaxation(d.taxation || '');
       })
       .catch(() => {
         setError('Не удалось загрузить данные организации');
       })
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [orgId, data, initForm]);  
+  // Важно: зависимости — только orgId, data и сама initForm. activeTab тут не участвует.
 
+  // Сохраняем и закрываем
   const handleSaveAndClose = async () => {
-    if (!id) return;
+    if (!orgId) return;
     setSaving(true);
     try {
-      await axios.put(`/api/organizations/${id}`, {
-        type: type === 'Физическое лицо' ? 'PHYSICAL' : 'LEGAL',
-        ...(type === 'Физическое лицо' && {
-          physicalType: status === 'Самозанятый' ? 'SELF_EMPLOYED' : 'IP',
+      await axios.put(`/api/organizations/${orgId}`, {
+        type: single.type === 'Физическое лицо' ? 'PHYSICAL' : 'LEGAL',
+        ...(single.type === 'Физическое лицо' && {
+          physicalType: single.status === 'Самозанятый' ? 'SELF_EMPLOYED' : 'IP',
         }),
-        lastName,
-        firstName,
-        middleName,
+        lastName: single.lastName,
+        firstName: single.firstName,
+        middleName: single.middleName,
         name: fullName,
-        prefix,
-        inn,
-        taxation,
+        prefix: single.prefix,
+        inn: single.inn,
+        taxation: single.taxation,
       });
+      resetForm(orgId);
+      closeTab(location.pathname);
       navigate(-1);
     } catch (err) {
       console.error(err);
@@ -117,6 +182,18 @@ const OrganizationEditPage: React.FC = () => {
     }
   };
 
+  // «Назад» — просто уходим, без сброса стора
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  // «Закрыть» — сбрасываем только data[orgId], закрываем вкладку, уходим назад
+  const handleClose = () => {
+    resetForm(orgId);
+    closeTab(location.pathname);
+    navigate(-1);
+  };
+
   if (loading) return <div className="p-4">Загрузка…</div>;
   if (error) return <div className="p-4 text-red-600">{error}</div>;
 
@@ -124,9 +201,8 @@ const OrganizationEditPage: React.FC = () => {
     <div className="p-4 bg-gray-50 flex-1 overflow-auto">
       {/* Навигация и заголовок */}
       <div className="flex justify-between items-center mb-4">
-        {/* Левая часть: «назад», «вперёд», «звёздочка», заголовок */}
         <div className="flex items-center space-x-2">
-          <button onClick={() => navigate(-1)} className="p-2 bg-white border rounded">
+          <button onClick={handleBack} className="p-2 bg-white border rounded">
             <ChevronLeft size={16} />
           </button>
           <button className="p-2 bg-white border rounded">
@@ -135,13 +211,11 @@ const OrganizationEditPage: React.FC = () => {
           <button className="p-2 bg-white border rounded">
             <Star size={16} />
           </button>
-          <h1 className="text-xl font-semibold ml-2">Редактировать организацию</h1>
+          <h1 className="text-xl font-semibold ml-2">{pageTitle}</h1>
         </div>
-
-        {/* Правая часть: кнопка «Закрыть» (иконка X) */}
         <div>
           <button
-            onClick={() => navigate(-1)}
+            onClick={handleClose}
             className="p-2 rounded-full hover:bg-gray-100"
             title="Закрыть"
           >
@@ -150,7 +224,7 @@ const OrganizationEditPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Табы (точно те же классы, что и в Create) */}
+      {/* Вкладки */}
       <div className="flex space-x-4 border-b border-gray-200 mb-6 pl-2">
         {tabLabels.map((label, idx) => (
           <button
@@ -167,7 +241,7 @@ const OrganizationEditPage: React.FC = () => {
         ))}
       </div>
 
-      {/* Тулбар (только для «Основное») */}
+      {/* Тулбар (для «Основное») */}
       {activeTab === 0 && (
         <div className="flex items-center mb-6 space-x-2">
           <button
@@ -206,9 +280,8 @@ const OrganizationEditPage: React.FC = () => {
         </div>
       )}
 
-      {/* Контент вкладок (точно дублируем из Create) */}
+      {/* Контент вкладок */}
       <div className="bg-white border rounded p-4 space-y-6">
-        {/* === Вкладка «Основное» === */}
         {activeTab === 0 && (
           <>
             {/* Вид и Статус */}
@@ -217,24 +290,20 @@ const OrganizationEditPage: React.FC = () => {
                 <label className="block text-sm font-medium mb-1">Вид:</label>
                 <select
                   className="w-full border px-2 py-1 rounded"
-                  value={type}
-                  onChange={(e) =>
-                    setType(e.target.value as 'Физическое лицо' | 'Юридическое лицо')
-                  }
+                  value={single.type}
+                  onChange={(e) => setType(orgId, e.target.value as any)}
                 >
                   <option>Физическое лицо</option>
                   <option>Юридическое лицо</option>
                 </select>
               </div>
-              {type === 'Физическое лицо' && (
+              {single.type === 'Физическое лицо' && (
                 <div>
                   <label className="block text-sm font-medium mb-1">Статус:</label>
                   <select
                     className="w-full border px-2 py-1 rounded"
-                    value={status}
-                    onChange={(e) =>
-                      setStatus(e.target.value as 'Самозанятый' | 'ИП')
-                    }
+                    value={single.status}
+                    onChange={(e) => setStatus(orgId, e.target.value as any)}
                   >
                     <option>Самозанятый</option>
                     <option>ИП</option>
@@ -243,12 +312,12 @@ const OrganizationEditPage: React.FC = () => {
               )}
             </div>
 
-            {/* ФИО */}
+            {/* Поля ФИО */}
             <div className="grid grid-cols-3 gap-4">
               {[
-                { label: 'Фамилия', value: lastName, onChange: setLastName },
-                { label: 'Имя', value: firstName, onChange: setFirstName },
-                { label: 'Отчество', value: middleName, onChange: setMiddleName },
+                { label: 'Фамилия', value: single.lastName, onChange: setLastName },
+                { label: 'Имя', value: single.firstName, onChange: setFirstName },
+                { label: 'Отчество', value: single.middleName, onChange: setMiddleName },
               ].map((fld, i) => (
                 <div key={i}>
                   <label className="block text-sm font-medium mb-1">{fld.label}:</label>
@@ -257,13 +326,13 @@ const OrganizationEditPage: React.FC = () => {
                     className="w-full border px-2 py-1 rounded"
                     placeholder={fld.label}
                     value={fld.value}
-                    onChange={(e) => fld.onChange(e.target.value)}
+                    onChange={(e) => fld.onChange(orgId, e.target.value)}
                   />
                 </div>
               ))}
             </div>
 
-            {/* Автоподставляемое наименование */}
+            {/* Автоподставляемое «Наименование» */}
             <div>
               <label className="block text-sm font-medium mb-1">Наименование:</label>
               <div className={`text-sm ${fullName ? 'text-gray-800' : 'text-red-600'}`}>
@@ -278,18 +347,18 @@ const OrganizationEditPage: React.FC = () => {
                 <input
                   type="text"
                   className="w-full border px-2 py-1 rounded"
-                  value={prefix}
-                  onChange={(e) => setPrefix(e.target.value)}
+                  value={single.prefix}
+                  onChange={(e) => setPrefix(orgId, e.target.value)}
                 />
                 <button
                   type="button"
                   className="ml-2 text-blue-600 hover:text-blue-800"
-                  onClick={() => setShowPrefixTip(!showPrefixTip)}
+                  onClick={() => setShowPrefixTip(orgId, !single.showPrefixTip)}
                 >
                   ?
                 </button>
               </div>
-              {showPrefixTip && (
+              {single.showPrefixTip && (
                 <div className="absolute top-full left-0 mt-2 w-80 bg-yellow-100 border border-gray-300 p-3 text-sm rounded shadow-lg z-10">
                   Префикс включается в состав номера документа…
                 </div>
@@ -304,18 +373,18 @@ const OrganizationEditPage: React.FC = () => {
                   type="text"
                   className="w-full border px-2 py-1 rounded"
                   placeholder="ИНН"
-                  value={inn}
-                  onChange={(e) => setInn(e.target.value)}
+                  value={single.inn}
+                  onChange={(e) => setInn(orgId, e.target.value)}
                 />
                 <button
                   type="button"
                   className="ml-2 text-blue-600 hover:text-blue-800"
-                  onClick={() => setShowInnTip(!showInnTip)}
+                  onClick={() => setShowInnTip(orgId, !single.showInnTip)}
                 >
                   ?
                 </button>
               </div>
-              {showInnTip && (
+              {single.showInnTip && (
                 <div className="absolute top-full left-0 mt-2 w-96 bg-yellow-100 border border-gray-300 p-3 text-sm rounded shadow-lg z-10">
                   Идентификационный номер налогоплательщика (ИНН)…
                 </div>
@@ -327,10 +396,10 @@ const OrganizationEditPage: React.FC = () => {
               <label className="block text-sm font-medium mb-1">Налогообложение:</label>
               <select
                 className="w-full border px-2 py-1 rounded"
-                value={taxation}
-                onChange={(e) => setTaxation(e.target.value)}
+                value={single.taxation}
+                onChange={(e) => setTaxation(orgId, e.target.value as any)}
               >
-                {status === 'Самозанятый' ? (
+                {single.status === 'Самозанятый' ? (
                   <option>Налог на профессиональный доход ("самозанятые")</option>
                 ) : (
                   <>
@@ -346,11 +415,9 @@ const OrganizationEditPage: React.FC = () => {
               </select>
             </div>
 
-            {/* Коллапс-секции */}
+            {/* Дополнительные коллапс-секции */}
             <details className="pt-2">
-              <summary className="text-green-600 cursor-pointer">
-                Основной банковский счет
-              </summary>
+              <summary className="text-green-600 cursor-pointer">Основной банковский счет</summary>
               <div className="grid grid-cols-2 gap-4 mt-2">
                 <div>
                   <label className="block text-sm font-medium mb-1">Банк:</label>
@@ -374,37 +441,18 @@ const OrganizationEditPage: React.FC = () => {
               <details key={i} className="pt-2">
                 <summary className="text-green-600 cursor-pointer">{section}</summary>
                 <div className="mt-2 text-gray-600">
-                  {/* Содержимое раздела {section} */}
+                  {/* Тут будет содержимое раздела {section} */}
                 </div>
               </details>
             ))}
           </>
         )}
 
-        {/* === Вкладка «Подразделения» === */}
-        {activeTab === 1 && (
-          <div className="text-gray-600">Раздел «Подразделения»</div>
-        )}
-
-        {/* === Вкладка «Банковские счета» === */}
-        {activeTab === 2 && (
-          <div className="text-gray-600">Раздел «Банковские счета»</div>
-        )}
-
-        {/* === Вкладка «Учётная политика» === */}
-        {activeTab === 3 && (
-          <div className="text-gray-600">Раздел «Учётная политика»</div>
-        )}
-
-        {/* === Вкладка «Лимиты остатка кассы» === */}
-        {activeTab === 4 && (
-          <div className="text-gray-600">Раздел «Лимиты остатка кассы»</div>
-        )}
-
-        {/* === Вкладка «Регистрации в налоговых органах» === */}
-        {activeTab === 5 && (
-          <div className="text-gray-600">Раздел «Регистрации в налоговых органах»</div>
-        )}
+        {activeTab === 1 && <div className="text-gray-600">Раздел «Подразделения»</div>}
+        {activeTab === 2 && <div className="text-gray-600">Раздел «Банковские счета»</div>}
+        {activeTab === 3 && <div className="text-gray-600">Раздел «Учётная политика»</div>}
+        {activeTab === 4 && <div className="text-gray-600">Раздел «Лимиты остатка кассы»</div>}
+        {activeTab === 5 && <div className="text-gray-600">Раздел «Регистрации в налоговых органах»</div>}
       </div>
     </div>
   );
