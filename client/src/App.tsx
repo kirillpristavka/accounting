@@ -12,19 +12,13 @@ import NomenclatureCreatePage from './pages/NomenclatureCreatePage';
 import NomenclatureEditPage from './pages/NomenclatureEditPage';
 import ReferencesPage from './pages/ReferencesPage';
 import OrganizationEditPage from './pages/OrganizationEditPage';
+import PopupBlock from './components/PopupBlock';
 
 const AppLayout: React.FC = () => {
-  const { allowOverflow } = useAppContext();
-
   return (
     <div className="flex flex-col h-screen min-h-0">
       <Topbar />
-      <div
-        className={`
-          flex flex-1 min-h-0
-          ${allowOverflow ? 'overflow-visible' : 'overflow-hidden'}
-        `}
-      >
+      <div className="flex flex-1 min-h-0 overflow-hidden">
         <Sidebar />
         <main className="flex-1 flex flex-col min-h-0">
           <Routes>
@@ -38,6 +32,7 @@ const AppLayout: React.FC = () => {
             <Route path="/nomenclature/:id/edit" element={<NomenclatureEditPage />} />
             <Route path="/references" element={<ReferencesPage />} />
           </Routes>
+          <PopupBlock />
         </main>
       </div>
     </div>

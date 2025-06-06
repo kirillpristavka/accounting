@@ -12,8 +12,6 @@ interface AppContextType {
   openTabs: Tab[];
   openTab: (label: string, path: string) => void;
   closeTab: (path: string) => void;
-  allowOverflow: boolean;
-  setAllowOverflow: (val: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -23,8 +21,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [openTabs, setOpenTabs] = useState<Tab[]>([
     {label: "Начальная страница", path: "/"}
   ]);
-
-  const [allowOverflow, setAllowOverflow] = useState(false);
 
   const openTab = (label: string, path: string) => {
     setOpenTabs(prev => {
@@ -38,7 +34,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   return (
-    <AppContext.Provider value={{ isActive, setIsActive, openTabs, openTab, closeTab, allowOverflow, setAllowOverflow }}>
+    <AppContext.Provider value={{ isActive, setIsActive, openTabs, openTab, closeTab }}>
       {children}
     </AppContext.Provider>
   );

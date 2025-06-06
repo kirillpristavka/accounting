@@ -1,5 +1,5 @@
 // src/pages/ReferencesPage.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { FiSettings, FiX } from 'react-icons/fi';
 import { useAppContext } from '../context/AppContext';
@@ -7,7 +7,7 @@ import { useAppContext } from '../context/AppContext';
 const ReferencesPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
-  const { setAllowOverflow, setIsActive } = useAppContext();
+  const { setIsActive } = useAppContext();
 
   const clearSearch = () => setSearch('');
   const closePage = () => {
@@ -15,15 +15,8 @@ const ReferencesPage: React.FC = () => {
     setIsActive('');
   };
 
-  useEffect(() => {
-    setAllowOverflow(true);
-    return () => {
-      setAllowOverflow(false);
-    };
-  }, []);
-
   return (
-    <div className="flex-1 relative z-20 -mt-9 bg-white min-h-screen overflow-visible">
+    <div className="flex-1 relative bg-white min-h-screen overflow-visible">
       {/* Поиск, шестерёнка, крестик */}
       <div className="absolute top-6 right-6 flex items-center space-x-3">
         <div className="relative">

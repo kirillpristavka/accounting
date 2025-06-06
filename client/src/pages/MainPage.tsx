@@ -1,5 +1,5 @@
 // src/pages/MainPage.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { FiSettings, FiX } from 'react-icons/fi';
 import { useAppContext } from '../context/AppContext';
@@ -7,7 +7,7 @@ import { useAppContext } from '../context/AppContext';
 const MainPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
-  const { isActive, setIsActive, setAllowOverflow } = useAppContext();
+  const { isActive, setIsActive } = useAppContext();
 
   const clearSearch = () => setSearch('');
   const closePage = () => {
@@ -15,13 +15,8 @@ const MainPage: React.FC = () => {
     setIsActive('');
   };
 
-  useEffect(() => {
-    setAllowOverflow(true);              // включаем overflow-visible
-    return () => { setAllowOverflow(false); }; // по уходу – возвращаем обратно
-  }, []);
-
   return (
-    <div className="flex-1 relative z-20 -mt-9 bg-white min-h-screen overflow-visible">
+    <div className="flex-1 relative bg-white h-full overflow-auto">
       <div className="absolute top-6 right-6 flex items-center space-x-3">
         <div className="relative">
           <input
