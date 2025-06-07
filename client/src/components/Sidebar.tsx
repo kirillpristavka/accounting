@@ -32,7 +32,7 @@ const Sidebar: React.FC = () => {
   const { isActive, setIsActive } = useAppContext();
 
   return (
-    <div className="relative w-60 bg-[#FFF7D2] min-h-screen">
+    <div className="relative w-50 bg-[#FFF7D2] min-h-screen border-r-1 border-gray-300">
       <nav className="mt-4">
         <ul>
           {menuItems.map(item => (
@@ -50,8 +50,8 @@ const Sidebar: React.FC = () => {
                 className={[
                   'w-full flex items-center gap-3 px-4 py-2 text-left rounded transition-colors duration-150',
                   isActive === item.label
-                    ? 'bg-white'
-                    : 'hover:bg-[#FFF9D9]'
+                    ? 'bg-white hover:underline cursor-pointer'
+                    : 'hover:underline cursor-pointer'
                 ].join(' ')}
               >
                 {item.icon}

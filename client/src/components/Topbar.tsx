@@ -12,6 +12,7 @@ import { useOrganizationCreate } from '../stores/useOrganizationCreate';
 // Однако функцию мы вызываем в runtime, поэтому её нужно импортировать “обычным” импортом:
 import { useOrganizationEdit } from '../stores/useOrganizationEdit';
 import type { Taxation } from '../stores/useOrganizationEdit'; // Если где-то нужен тип
+import { Home, X } from 'lucide-react';
 
 // Статические имена маршрутов (без “динамических” /organizations/:id/edit)
 const routeNames: Record<string, string> = {
@@ -123,7 +124,7 @@ const Topbar: React.FC = () => {
   };
 
   return (
-    <header className="relative z-10 w-full bg-gray-100 border-b border-gray-200">
+    <header className="relative z-10 w-full bg-gray-100 border-b-1 border-gray-300">
       <nav className="flex">
         {openTabs.map((tab) => {
           const active = location.pathname === tab.path;
@@ -132,23 +133,29 @@ const Topbar: React.FC = () => {
               key={tab.path}
               onClick={() => handleSelect(tab.path)}
               className={`
-                relative flex items-center px-4 py-2 mr-2 cursor-pointer select-none
-                border-b-2
+                relative flex items-center pl-2 pr-4 select-none pb-2 pt-1
+                border-r-1 border-gray-400
                 ${
                   active
-                    ? 'text-gray-900 border-gray-900'
-                    : 'text-gray-600 border-transparent hover:text-gray-800 hover:bg-gray-200'
+                    ? 'text-gray-900 bg-white'
+                    : 'text-gray-600'
                 }
               `}
             >
-              <span className="pr-4">{tab.label}</span>
+              {tab.path === '/' && <Home size={18} className="ml-0.5 mr-2.5 pt-0.5" />}
+              <span className="text-sm mr-2">{tab.label}</span>
+
+              {active && (
+                <div className="absolute inset-x-0 left-1 right-1 bottom-0.5 h-0.5 bg-green-500" />
+              )}
+
               {tab.path !== '/' && (
                 <button
                   onClick={(e) => handleClose(e, tab.path)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 px-1 text-sm hover:text-red-600"
-                  aria-label={`Закрыть вкладку ${tab.label}`}
+                  className="hover:bg-gray-300 rounded-full p-0.25 absolute right-1.25 top-2"
+                  title={`Закрыть вкладку ${tab.label}`}
                 >
-                  ×
+                  <X size={14} className="" />
                 </button>
               )}
             </div>

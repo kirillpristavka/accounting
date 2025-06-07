@@ -15,7 +15,7 @@ const PopupBlock: React.FC = () => {
   const baseClasses = `
     absolute
     top-2                /* 14*4px = 56px от верха (под Topbar h-[56px]) */
-    left-60              /* 60*4px = 240px от левого края (Sidebar w-60) */
+    left-49.75           /* 60*4px = 240px от левого края (Sidebar w-60) */
     right-2              /* 4*4px = 16px от правого края */
     bottom-2             /* 4*4px = 16px от низа */
     bg-white
