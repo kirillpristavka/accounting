@@ -1,7 +1,7 @@
 // src/pages/OrganizationsPage.tsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   ChevronLeft,
   ChevronRight,
@@ -13,7 +13,9 @@ import {
   List as ListIcon,
   Paperclip,
   Archive,
+  X,
 } from 'lucide-react';
+import { useAppContext } from '../context/AppContext';
 
 interface Organization {
   id: number;
@@ -25,6 +27,8 @@ interface Organization {
 
 const OrganizationsPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { closeTab } = useAppContext();
 
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +56,7 @@ const OrganizationsPage: React.FC = () => {
 
     try {
       await axios.delete(`/api/organizations/${selectedId}`);
-      setOrganizations((prev) => prev.filter((o) => o.id !== selectedId));
+      setOrganizations(prev => prev.filter(o => o.id !== selectedId));
       setSelectedId(null);
     } catch (err) {
       console.error(err);
@@ -60,20 +64,36 @@ const OrganizationsPage: React.FC = () => {
     }
   };
 
+  const handleClose = () => {
+    closeTab(location.pathname);
+    navigate(-1);
+  };
+
   return (
     <div className="p-4 flex-1">
       {/* Header */}
-      <div className="flex items-center mb-4 space-x-2">
-        <button onClick={() => navigate(-1)} className="p-2 bg-white border rounded">
-          <ChevronLeft size={16} />
-        </button>
-        <button onClick={() => navigate(+1)} className="p-2 bg-white border rounded">
-          <ChevronRight size={16} />
-        </button>
-        <button className="p-2 bg-white border rounded">
-          <Star size={16} />
-        </button>
-        <h1 className="text-xl font-semibold ml-2">Организации</h1>
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center space-x-2">
+          <button onClick={() => navigate(-1)} className="p-2 bg-white border rounded">
+            <ChevronLeft size={16} />
+          </button>
+          <button onClick={() => navigate(+1)} className="p-2 bg-white border rounded">
+            <ChevronRight size={16} />
+          </button>
+          <button className="p-2 bg-white border rounded">
+            <Star size={16} />
+          </button>
+          <h1 className="text-xl font-semibold ml-2">Организации</h1>
+        </div>
+        <div>
+          <button
+            onClick={handleClose}
+            className="p-2 rounded-full hover:bg-gray-100"
+            title="Закрыть"
+          >
+            <X size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Toolbar */}
@@ -129,13 +149,13 @@ const OrganizationsPage: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {organizations.map((org) => {
+              {organizations.map(org => {
                 const isActive = org.id === selectedId;
                 return (
                   <tr
                     key={org.id}
                     onClick={() =>
-                      setSelectedId((prev) => (prev === org.id ? null : org.id))
+                      setSelectedId(prev => (prev === org.id ? null : org.id))
                     }
                     onDoubleClick={() =>
                       navigate(`/organizations/${org.id}/edit`)

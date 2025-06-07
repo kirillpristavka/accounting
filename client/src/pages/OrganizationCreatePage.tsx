@@ -60,14 +60,13 @@ const OrganizationCreatePage: React.FC = () => {
     resetForm,
   } = useOrganizationCreate();
 
-  // Собираем «Наименование» как «Фамилия И.О.»
+  // «Фамилия И.О.»
   const fullName = lastName
     ? `${lastName.trim()} ${
         firstName ? firstName.trim()[0].toUpperCase() + '.' : ''
       }${middleName ? middleName.trim()[0].toUpperCase() + '.' : ''}`
     : '';
 
-  // Отправка формы на сервер и закрытие вкладки
   const handleSaveAndClose = async () => {
     try {
       await axios.post('/api/organizations', {
@@ -92,12 +91,8 @@ const OrganizationCreatePage: React.FC = () => {
     }
   };
 
-  // Нажатие стрелки «Назад» не сбрасывает сто и не закрывает вкладку
-  const handleBack = () => {
-    navigate(-1);
-  };
+  const handleBack = () => navigate(-1);
 
-  // Нажатие «Закрыть» (иконка X) сбрасывает сто, закрывает вкладку и уходит назад
   const handleClose = () => {
     resetForm();
     closeTab(location.pathname);
@@ -105,30 +100,28 @@ const OrganizationCreatePage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 bg-gray-50 flex-1 overflow-auto">
+    <div className="p-4 bg-gray-50 overflow-auto">
       {/* Навигация и заголовок */}
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center space-x-2">
-          <button onClick={handleBack} className="p-2 bg-white border rounded">
+          <button onClick={handleBack} className="p-2 bg-white border">
             <ChevronLeft size={16} />
           </button>
-          <button className="p-2 bg-white border rounded">
+          <button className="p-2 bg-white border">
             <ChevronRight size={16} />
           </button>
-          <button className="p-2 bg-white border rounded">
+          <button className="p-2 bg-white border">
             <Star size={16} />
           </button>
           <h1 className="text-xl font-semibold ml-2">Организация (создание)</h1>
         </div>
-        <div>
-          <button
-            onClick={handleClose}
-            className="p-2 rounded-full hover:bg-gray-100"
-            title="Закрыть"
-          >
-            <X size={16} />
-          </button>
-        </div>
+        <button
+          onClick={handleClose}
+          className="p-2 hover:bg-gray-100"
+          title="Закрыть"
+        >
+          <X size={16} />
+        </button>
       </div>
 
       {/* Вкладки */}
@@ -148,109 +141,116 @@ const OrganizationCreatePage: React.FC = () => {
         ))}
       </div>
 
-      {/* Тулбар (только для «Основное») */}
+      {/* Тулбар для «Основное» */}
       {activeTab === 0 && (
         <div className="flex items-center mb-6 space-x-2">
           <button
             onClick={handleSaveAndClose}
-            className="px-3 py-1 bg-yellow-400 text-black font-medium rounded shadow-sm hover:bg-yellow-500"
+            className="px-3 py-1 bg-yellow-400 text-black font-medium shadow-sm hover:bg-yellow-500"
           >
             Записать и закрыть
           </button>
-          <button className="px-3 py-1 bg-white border rounded flex items-center hover:bg-gray-100">
+          <button className="px-3 py-1 bg-white border flex items-center hover:bg-gray-100">
             <Save size={16} className="mr-1" />
             Записать
           </button>
-          <button className="p-2 bg-white border rounded hover:bg-gray-100">
+          <button className="p-2 bg-white border hover:bg-gray-100">
             <FileText size={16} />
           </button>
-          <button className="p-2 bg-white border rounded hover:bg-gray-100">
+          <button className="p-2 bg-white border hover:bg-gray-100">
             <Mail size={16} />
           </button>
-          <button className="p-2 bg-white border rounded hover:bg-gray-100">
+          <button className="p-2 bg-white border hover:bg-gray-100">
             <List size={16} />
           </button>
-          <button className="p-2 bg-white border rounded hover:bg-gray-100">
+          <button className="p-2 bg-white border hover:bg-gray-100">
             <Paperclip size={16} />
           </button>
-          <button className="p-2 bg-white border rounded hover:bg-gray-100">
+          <button className="p-2 bg-white border hover:bg-gray-100">
             <Archive size={16} />
           </button>
-          <button className="flex items-center px-2 py-1 bg-white border rounded hover:bg-gray-100">
+          <button className="flex items-center px-2 py-1 bg-white border hover:bg-gray-100">
             ЭДО <ChevronDown size={16} className="ml-1" />
           </button>
         </div>
       )}
 
       {/* Контент вкладок */}
-      <div className="bg-white border rounded p-4 space-y-6">
+      <div className="bg-white border p-4">
         {activeTab === 0 && (
-          <>
-            {/* Вид и Статус */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Вид:</label>
+          <div className="space-y-2">
+            {/* Вид */}
+            <div className="flex items-center">
+              <label htmlFor="type" className="w-40 text-sm font-medium">
+                Вид:
+              </label>
+              <select
+                id="type"
+                className="border px-1"
+                value={type}
+                onChange={e => setType(e.target.value as any)}
+              >
+                <option>Физическое лицо</option>
+                <option>Юридическое лицо</option>
+              </select>
+            </div>
+
+            {/* Статус */}
+            {type === 'Физическое лицо' && (
+              <div className="flex items-center">
+                <label htmlFor="status" className="w-40 text-sm font-medium">
+                  Статус:
+                </label>
                 <select
-                  className="w-full border px-2 py-1 rounded"
-                  value={type}
-                  onChange={(e) => setType(e.target.value as any)}
+                  id="status"
+                  className="border px-1"
+                  value={status}
+                  onChange={e => setStatus(e.target.value as any)}
                 >
-                  <option>Физическое лицо</option>
-                  <option>Юридическое лицо</option>
+                  <option>Самозанятый</option>
+                  <option>ИП</option>
                 </select>
               </div>
-              {type === 'Физическое лицо' && (
-                <div>
-                  <label className="block text-sm font-medium mb-1">Статус:</label>
-                  <select
-                    className="w-full border px-2 py-1 rounded"
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value as any)}
-                  >
-                    <option>Самозанятый</option>
-                    <option>ИП</option>
-                  </select>
-                </div>
-              )}
-            </div>
+            )}
 
             {/* ФИО */}
-            <div className="grid grid-cols-3 gap-4">
-              {[
-                { label: 'Фамилия', value: lastName, onChange: setLastName },
-                { label: 'Имя', value: firstName, onChange: setFirstName },
-                { label: 'Отчество', value: middleName, onChange: setMiddleName },
-              ].map((fld, i) => (
-                <div key={i}>
-                  <label className="block text-sm font-medium mb-1">{fld.label}:</label>
-                  <input
-                    type="text"
-                    className="w-full border px-2 py-1 rounded"
-                    placeholder={fld.label}
-                    value={fld.value}
-                    onChange={(e) => fld.onChange(e.target.value)}
-                  />
-                </div>
-              ))}
-            </div>
+            {[
+              { id: 'lastName', label: 'Фамилия', value: lastName, onChange: setLastName },
+              { id: 'firstName', label: 'Имя', value: firstName, onChange: setFirstName },
+              { id: 'middleName', label: 'Отчество', value: middleName, onChange: setMiddleName },
+            ].map(fld => (
+              <div key={fld.id} className="flex items-center">
+                <label htmlFor={fld.id} className="w-40 text-sm font-medium">
+                  {fld.label}:
+                </label>
+                <input
+                  id={fld.id}
+                  type="text"
+                  className="border px-1"
+                  placeholder={fld.label}
+                  value={fld.value}
+                  onChange={e => fld.onChange(e.target.value)}
+                />
+              </div>
+            ))}
 
-            {/* Автоподставляемое наименование */}
-            <div>
-              <label className="block текст-sm font-medium mb-1">Наименование:</label>
-              <div className={`text-sm ${fullName ? 'text-gray-800' : 'text-red-600'}`}>
+            {/* Наименование */}
+            <div className="flex items-center">
+              <label className="w-40 text-sm font-medium">Наименование:</label>
+              <div className={`flex-1 text-sm ${fullName ? 'text-gray-800' : 'text-red-600'}`}>
                 {fullName || '<Не заполнено ФИО>'}
               </div>
             </div>
 
             {/* Префикс */}
-            <div className="relative">
-              <label className="block text-sm font-medium mb-1">Префикс:</label>
+            <div className="relative flex items-start ">
+              <label className="w-40 text-sm font-medium">Префикс:</label>
               <div className="flex items-center">
                 <input
                   type="text"
-                  className="w-full border px-2 py-1 rounded"
+                  className="border px-1 w-40"
                   value={prefix}
-                  onChange={(e) => setPrefix(e.target.value)}
+                  onChange={e => setPrefix(e.target.value)}
                 />
                 <button
                   type="button"
@@ -261,22 +261,22 @@ const OrganizationCreatePage: React.FC = () => {
                 </button>
               </div>
               {showPrefixTip && (
-                <div className="absolute top-full left-0 mt-2 w-80 bg-yellow-100 border border-gray-300 p-3 text-sm rounded shadow-lg z-10">
+                <div className="absolute top-full left-40 mt-1 w-80 bg-yellow-100 border border-gray-300 p-3 text-sm shadow-lg z-10">
                   Префикс включается в состав номера документа…
                 </div>
               )}
             </div>
 
             {/* ИНН */}
-            <div className="relative">
-              <label className="block text-sm font-medium mb-1">ИНН:</label>
+            <div className="relative flex items-start">
+              <label className="w-40 text-sm font-medium">ИНН:</label>
               <div className="flex items-center">
                 <input
                   type="text"
-                  className="w-full border px-2 py-1 rounded"
+                  className="flex-1 border px-1"
                   placeholder="ИНН"
                   value={inn}
-                  onChange={(e) => setInn(e.target.value)}
+                  onChange={e => setInn(e.target.value)}
                 />
                 <button
                   type="button"
@@ -287,19 +287,19 @@ const OrganizationCreatePage: React.FC = () => {
                 </button>
               </div>
               {showInnTip && (
-                <div className="absolute top-full left-0 mt-2 w-96 bg-yellow-100 border border-gray-300 p-3 text-sm rounded shadow-lg z-10">
-                  Идентификационный номер налогоплательщика (ИНН)…
+                <div className="absolute top-full left-40 mt-1 w-96 bg-yellow-100 border border-gray-300 p-3 text-sm shadow-lg z-10">
+                  Идентификатор налогоплательщика (ИНН)…
                 </div>
               )}
             </div>
 
             {/* Налогообложение */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Налогообложение:</label>
+            <div className="flex items-center">
+              <label className="w-40 text-sm font-medium">Налогообложение:</label>
               <select
-                className="w-full border px-2 py-1 rounded"
+                className="border px-1"
                 value={taxation}
-                onChange={(e) => setTaxation(e.target.value as any)}
+                onChange={e => setTaxation(e.target.value as any)}
               >
                 {status === 'Самозанятый' ? (
                   <option>Налог на профессиональный доход ("самозанятые")</option>
@@ -317,46 +317,49 @@ const OrganizationCreatePage: React.FC = () => {
               </select>
             </div>
 
-            {/* Коллапс-секции */}
-            <details className="pt-2">
+            {/* Секции */}
+            <details>
               <summary className="text-green-600 cursor-pointer">
                 Основной банковский счет
               </summary>
-              <div className="grid grid-cols-2 gap-4 mt-2">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Банк:</label>
+              <div className="mt-2 space-y-4">
+                <div className="flex items-center gap-4">
+                  <label className="w-40 text-sm font-medium">Банк:</label>
                   <input
                     type="text"
-                    className="w-full border px-2 py-1 rounded"
+                    className="flex-1 border px-2 py-1"
                     placeholder="БИК или наименование"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Номер счета:</label>
+                <div className="flex items-center gap-4">
+                  <label className="w-40 text-sm font-medium">Номер счета:</label>
                   <input
                     type="text"
-                    className="w-full border px-2 py-1 rounded"
+                    className="flex-1 border px-2 py-1"
                     placeholder="Номер счета"
                   />
                 </div>
               </div>
             </details>
+
             {['Адрес и телефон', 'Логотип и печать', 'Налоговая инспекция'].map((section, i) => (
-              <details key={i} className="pt-2">
+              <details key={i}>
                 <summary className="text-green-600 cursor-pointer">{section}</summary>
                 <div className="mt-2 text-gray-600">
                   {/* Содержимое раздела {section} */}
                 </div>
               </details>
             ))}
-          </>
+          </div>
         )}
 
-        {activeTab === 1 && <div className="text-gray-600">Раздел «Подразделения»</div>}
-        {activeTab === 2 && <div className="text-gray-600">Раздел «Банковские счета»</div>}
-        {activeTab === 3 && <div className="text-gray-600">Раздел «Учетная политика»</div>}
-        {activeTab === 4 && <div className="text-gray-600">Раздел «Лимиты остатка кассы»</div>}
-        {activeTab === 5 && <div className="text-gray-600">Раздел «Регистрации в налоговых органах»</div>}
+        {activeTab === 1 && <div className="p-4 text-gray-600">Раздел «Подразделения»</div>}
+        {activeTab === 2 && <div className="p-4 text-gray-600">Раздел «Банковские счета»</div>}
+        {activeTab === 3 && <div className="p-4 text-gray-600">Раздел «Учетная политика»</div>}
+        {activeTab === 4 && <div className="p-4 text-gray-600">Раздел «Лимиты остатка кассы»</div>}
+        {activeTab === 5 && (
+          <div className="p-4 text-gray-600">Раздел «Регистрации в налоговых органах»</div>
+        )}
       </div>
     </div>
   );

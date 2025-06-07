@@ -73,7 +73,8 @@ const ReferencesPage: React.FC = () => {
             Покупки и продажи
           </h2>
           <NavLink
-            to="/references/contractors"
+            onClick={() => setIsActive('')}
+            to="/contragents"
             className="block text-sm pl-4 mb-1 hover:underline"
           >
             Контрагенты
@@ -119,6 +120,7 @@ const ReferencesPage: React.FC = () => {
             Товары и услуги
           </h2>
           <NavLink
+            onClick={() => setIsActive('')}
             to="/nomenclature"
             className="block text-sm pl-4 mb-1 hover:underline"
           >
