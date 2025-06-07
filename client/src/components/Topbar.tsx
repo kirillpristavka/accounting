@@ -21,6 +21,7 @@ const routeNames: Record<string, string> = {
   '/organizations/create': 'Организация (создание)',
   '/nomenclature': 'Номенклатура',
   '/nomenclature/create': 'Номенклатура (создание)',
+  '/contragents': 'Контрагенты',
   // … другие статические пути …
 };
 

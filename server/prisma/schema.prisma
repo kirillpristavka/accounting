@@ -52,3 +52,10 @@ model Nomenclature {
   hideInLists  Boolean @default(false)
   // ...другие поля и даты, если нужно
 }
+
+model Contragent {
+  id    Int    @id @default(autoincrement())
+  name  String
+  phone String?
+  email String?
+}

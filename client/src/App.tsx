@@ -10,6 +10,7 @@ import OrganizationCreatePage from './pages/OrganizationCreatePage';
 import NomenclaturePage from './pages/NomenclaturePage';
 import NomenclatureCreatePage from './pages/NomenclatureCreatePage';
 import NomenclatureEditPage from './pages/NomenclatureEditPage';
+import ContragentsPage from './pages/ContragentsPage';
 import ReferencesPage from './pages/ReferencesPage';
 import OrganizationEditPage from './pages/OrganizationEditPage';
 import PopupBlock from './components/PopupBlock';
@@ -30,6 +31,7 @@ const AppLayout: React.FC = () => {
             <Route path="/nomenclature" element={<NomenclaturePage />} />
             <Route path="/nomenclature/create" element={<NomenclatureCreatePage />} />
             <Route path="/nomenclature/:id/edit" element={<NomenclatureEditPage />} />
+            <Route path="/contragents" element={<ContragentsPage />} />
             <Route path="/references" element={<ReferencesPage />} />
           </Routes>
           <PopupBlock />
