@@ -4,6 +4,7 @@ import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
 import organizationsRouter from './routes/organizations';
 import nomenclatureRouter from './routes/nomenclature';
+import accountsRouter        from './routes/accounts';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -14,6 +15,7 @@ app.use(express.json());
 // Роуты
 app.use('/api/organizations', organizationsRouter(prisma));
 app.use('/api/nomenclature', nomenclatureRouter(prisma));
+app.use('/api/accounts', accountsRouter(prisma));
 
 const port = 4000;
 app.listen(port, () => {

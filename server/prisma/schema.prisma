@@ -1,3 +1,4 @@
+// prisma/schema.prisma
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -29,10 +30,10 @@ model Organization {
 }
 
 model SelfEmployed {
-  orgId      Int    @id
-  lastName   String
-  firstName  String
-  middleName String?
+  orgId        Int    @id
+  lastName     String
+  firstName    String
+  middleName   String?
   organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 }
 
@@ -50,5 +51,14 @@ model Nomenclature {
   manufacturer String?
   comment      String?
   hideInLists  Boolean @default(false)
-  // ...другие поля и даты, если нужно
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+
+/// вот новый модель для плана счетов
+model Account {
+  id         Int     @id @default(autoincrement())
+  code       String  @unique
+  name       String
+  offBalance Boolean @default(false)  // false = основные, true = забалансовые
 }

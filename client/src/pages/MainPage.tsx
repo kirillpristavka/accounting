@@ -165,15 +165,9 @@ const MainPage: React.FC = () => {
 
           <h2 className="text-[#259e00] text-base mt-4 mb-2">Начало работы</h2>
           <NavLink
-            to="/onboarding/helpers"
-            end
-            className={({ isActive }) =>
-              `block text-sm pl-4 mb-1 hover:underline ${
-                isActive
-                  ? 'border border-dashed border-gray-400 rounded px-1 py-0.5'
-                  : ''
-              }`
-            }
+            onClick={() => setIsActive('')}
+            to="/balance-entry-assistant"
+            className="block text-sm pl-4 mb-1 hover:underline"
           >
             Помощник ввода остатков
           </NavLink>
