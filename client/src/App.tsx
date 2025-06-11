@@ -16,6 +16,7 @@ import PopupBlock from './components/PopupBlock';
 import ContragentsPage from './pages/ContragentsPage';
 import ContragentCreatePage from './pages/ContragentCreatePage';
 import BalanceEntryAssistantPage from './pages/BalanceEntryAssistantPage';
+import GoodsBalanceEntryPage from './pages/GoodsBalanceEntryPage';
 
 const AppLayout: React.FC = () => {
   return (
@@ -37,6 +38,7 @@ const AppLayout: React.FC = () => {
             <Route path="/contragents" element={<ContragentsPage />} />
             <Route path="/contragents/create" element={<ContragentCreatePage />} />
             <Route path="/balance-entry-assistant" element={<BalanceEntryAssistantPage />} />
+            <Route path="/goods-balance-entry" element={<GoodsBalanceEntryPage />} />
           </Routes>
           <PopupBlock />
         </main>

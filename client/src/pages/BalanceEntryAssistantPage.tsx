@@ -153,7 +153,10 @@ const BalanceEntryAssistantPage: React.FC = () => {
 
         {/* Действия */}
         <div className="flex-shrink-0 flex space-x-2">
-          <button className="px-3 py-1 bg-white border rounded hover:bg-gray-100">
+          <button
+            onClick={() => navigate('/goods-balance-entry')}
+            className="px-3 py-1 bg-white border rounded hover:bg-gray-100"
+          >
             Ввести остатки по счету
           </button>
           <button className="flex items-center px-3 py-1 bg-white border rounded hover:bg-gray-100">

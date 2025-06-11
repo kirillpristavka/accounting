@@ -22,6 +22,7 @@ const routeNames: Record<string, string> = {
   '/nomenclature': 'Номенклатура',
   '/nomenclature/create': 'Номенклатура (создание)',
   '/balance-entry-assistant': 'Помощник ввода начальных остатков',
+  '/goods-balance-entry': 'Ввод остатков (Товары)',
   // … другие статические пути …
 };
 
