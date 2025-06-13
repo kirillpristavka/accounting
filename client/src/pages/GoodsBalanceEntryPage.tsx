@@ -59,6 +59,14 @@ const GoodsBalanceEntryPage: React.FC = () => {
 
   const [nomenclatureList, setNomenclatureList] = useState<string[]>([])
 
+  const [accountModal, setAccountModal] = useState<{
+    visible: boolean
+    targetRowIndex: number | null
+  }>({ visible: false, targetRowIndex: null })
+
+  const [accountList, setAccountList] = useState<{ account: string; name: string }[]>([])
+  const [selectedAccountCode, setSelectedAccountCode] = useState<string | null>(null)
+
   useEffect(() => {
     axios
       .get<Organization[]>('/api/organizations')
@@ -131,6 +139,24 @@ const GoodsBalanceEntryPage: React.FC = () => {
     } catch (err) {
       console.error('Ошибка загрузки номенклатуры', err)
       setNomenclatureList([])
+    }
+  }
+
+  const fetchAccounts = async () => {
+    try {
+      const res = await axios.get('/api/accounts', {
+        params: { offBalance: false },
+      })
+
+      const filtered = res.data
+        .filter((a: { account: string }) =>
+          a.account.startsWith('41.') && !['41.11', '41.12'].includes(a.account)
+        )
+
+      setAccountList(filtered)
+    } catch (err) {
+      console.error('Ошибка загрузки счетов', err)
+      setAccountList([])
     }
   }
 
@@ -292,6 +318,9 @@ const GoodsBalanceEntryPage: React.FC = () => {
                       if (field === 'name') {
                         fetchNomenclature()
                         setNomenclatureModal({ visible: true, targetRowIndex: index })
+                      } else if (field === 'account') {
+                        fetchAccounts()
+                        setAccountModal({ visible: true, targetRowIndex: index })
                       } else {
                         setEditingCell({ rowId: row.id, column: field })
                       }
@@ -315,7 +344,14 @@ const GoodsBalanceEntryPage: React.FC = () => {
                         onBlur={() => setEditingCell(null)}
                       />
                     ) : (
-                      row[field] || '<не требуется>'
+                      // отрисовка значений в ячейке
+                      field === 'cost'
+                        ? (row.cost ? row.cost : '') // Стоимость: пусто если 0
+                        : field === 'quantity'
+                          ? (row.quantity ? row.quantity : '<не требуется>') // Кол-во: <не требуется> если 0
+                          : row[field]
+                            ? row[field]
+                            : (['account', 'country'].includes(field) ? '' : '<не требуется>')
                     )}
                   </td>
                 ))}
@@ -372,6 +408,67 @@ const GoodsBalanceEntryPage: React.FC = () => {
             >
               Закрыть
             </button>
+          </div>
+        </div>
+      )}
+
+      {accountModal.visible && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded shadow p-4 w-[700px] max-h-[80vh] overflow-y-auto border">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg font-semibold">План счетов бухгалтерского учета</h2>
+              <button
+                onClick={() => {
+                  setAccountModal({ visible: false, targetRowIndex: null })
+                  setSelectedAccountCode(null)
+                }}
+                className="text-gray-500 hover:text-black"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="flex justify-start mb-3">
+              <button
+                className="px-3 py-1 bg-yellow-400 text-black rounded hover:bg-yellow-500 font-semibold disabled:opacity-50"
+                disabled={!selectedAccountCode}
+                onClick={() => {
+                  if (
+                    selectedAccountCode &&
+                    accountModal.targetRowIndex !== null
+                  ) {
+                    const updated = [...goodsRows]
+                    updated[accountModal.targetRowIndex].account = selectedAccountCode
+                    setGoodsRows(updated)
+                  }
+                  setAccountModal({ visible: false, targetRowIndex: null })
+                  setSelectedAccountCode(null)
+                }}
+              >
+                Выбрать
+              </button>
+            </div>
+
+            <table className="w-full text-sm border border-gray-300">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="p-2 text-left border border-gray-300">Код счета</th>
+                  <th className="p-2 text-left border border-gray-300">Наименование счета</th>
+                </tr>
+              </thead>
+              <tbody>
+                {accountList.map((acc, idx) => (
+                  <tr
+                    key={idx}
+                    className={`cursor-pointer ${selectedAccountCode === acc.account ? 'bg-yellow-100' : 'hover:bg-gray-100'}`}
+                    onClick={() => setSelectedAccountCode(acc.account)}
+                  >
+                    <td className="p-2 border border-gray-300">{acc.account}</td>
+                    <td className="p-2 border border-gray-300">{acc.name}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
