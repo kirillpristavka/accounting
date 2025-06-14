@@ -32,6 +32,14 @@ interface GoodsRow {
   customs?: string
 }
 
+interface NomenclatureItem {
+  id: number
+  name: string
+  article?: string
+  unit?: string
+  vat?: number
+}
+
 const GoodsBalanceEntryPage: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
@@ -55,9 +63,14 @@ const GoodsBalanceEntryPage: React.FC = () => {
   const [nomenclatureModal, setNomenclatureModal] = useState<{
     visible: boolean
     targetRowIndex: number | null
-  }>(() => ({ visible: false, targetRowIndex: null }))
+    selectedIndex: number | null
+  }>({
+    visible: false,
+    targetRowIndex: null,
+    selectedIndex: null,
+  })
 
-  const [nomenclatureList, setNomenclatureList] = useState<string[]>([])
+  const [nomenclatureList, setNomenclatureList] = useState<NomenclatureItem[]>([])
 
   const [accountModal, setAccountModal] = useState<{
     visible: boolean
@@ -133,9 +146,8 @@ const GoodsBalanceEntryPage: React.FC = () => {
 
   const fetchNomenclature = async () => {
     try {
-      const response = await axios.get('/api/nomenclature')
-      const names = response.data.map((item: any) => item.name)
-      setNomenclatureList(names)
+      const response = await axios.get<NomenclatureItem[]>('/api/nomenclature')
+      setNomenclatureList(response.data)
     } catch (err) {
       console.error('Ошибка загрузки номенклатуры', err)
       setNomenclatureList([])
@@ -317,7 +329,7 @@ const GoodsBalanceEntryPage: React.FC = () => {
                     onDoubleClick={() => {
                       if (field === 'name') {
                         fetchNomenclature()
-                        setNomenclatureModal({ visible: true, targetRowIndex: index })
+                        setNomenclatureModal({ visible: true, targetRowIndex: index, selectedIndex: null })
                       } else if (field === 'account') {
                         fetchAccounts()
                         setAccountModal({ visible: true, targetRowIndex: index })
@@ -382,32 +394,68 @@ const GoodsBalanceEntryPage: React.FC = () => {
 
       {nomenclatureModal.visible && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded shadow p-4 w-96 max-h-[80vh] overflow-y-auto">
-            <h2 className="text-lg font-semibold mb-2">Выберите номенклатуру</h2>
-            <ul className="divide-y">
-              {nomenclatureList.map((item, idx) => (
-                <li
-                  key={idx}
-                  className="p-2 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => {
-                    if (nomenclatureModal.targetRowIndex !== null) {
-                      const updated = [...goodsRows]
-                      updated[nomenclatureModal.targetRowIndex].name = item
-                      setGoodsRows(updated)
-                    }
-                    setNomenclatureModal({ visible: false, targetRowIndex: null })
-                  }}
-                >
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <button
-              onClick={() => setNomenclatureModal({ visible: false, targetRowIndex: null })}
-              className="mt-4 px-3 py-1 border rounded hover:bg-gray-100"
-            >
-              Закрыть
-            </button>
+          <div className="bg-white rounded shadow p-4 w-[800px] max-h-[80vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-lg font-semibold">Номенклатура: Товары на складе</h2>
+              <button
+                onClick={() => setNomenclatureModal({ visible: false, targetRowIndex: null, selectedIndex: null })}
+                className="text-gray-500 hover:text-black text-xl"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex items-center space-x-2 mb-2">
+              <button
+                onClick={() => {
+                  if (nomenclatureModal.targetRowIndex !== null && nomenclatureModal.selectedIndex !== null) {
+                    const selected = nomenclatureList[nomenclatureModal.selectedIndex]
+                    const updated = [...goodsRows]
+                    updated[nomenclatureModal.targetRowIndex].name = selected.name
+                    setGoodsRows(updated)
+                  }
+                  setNomenclatureModal({ visible: false, targetRowIndex: null, selectedIndex: null })
+                }}
+                className="px-3 py-1 bg-yellow-400 text-black rounded hover:bg-yellow-500"
+              >
+                Выбрать
+              </button>
+              <button className="px-3 py-1 bg-white border rounded">Создать</button>
+              <button className="px-3 py-1 bg-white border rounded">Создать группу</button>
+              <button className="px-3 py-1 bg-white border rounded">?</button>
+            </div>
+
+            {/* Table */}
+            <div className="overflow-auto border rounded">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-100 sticky top-0">
+                  <tr>
+                    <th className="p-2 text-left">Наименование</th>
+                    <th className="p-2 text-left">Артикул</th>
+                    <th className="p-2 text-left">Единица</th>
+                    <th className="p-2 text-left">% НДС</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {nomenclatureList.map((item, idx) => (
+                    <tr
+                      key={idx}
+                      className={`cursor-pointer ${nomenclatureModal.selectedIndex === idx ? 'bg-yellow-100' : 'hover:bg-gray-100'}`}
+                      onClick={() =>
+                        setNomenclatureModal((prev) => ({ ...prev, selectedIndex: idx }))
+                      }
+                    >
+                      <td className="p-2">{item.name}</td>
+                      <td className="p-2">{item.article}</td>
+                      <td className="p-2">{item.unit}</td>
+                      <td className="p-2">{item.vat}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
