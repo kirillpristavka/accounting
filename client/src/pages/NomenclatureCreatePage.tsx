@@ -51,7 +51,7 @@ export const NomenclatureCreatePage: React.FC = () => {
   const [article, setArticle] = useState('');
   const [group, setGroup] = useState('');
   const [unit, setUnit] = useState('шт');
-  const [vat, setVat] = useState('20%');
+  const [vat, setVat] = useState('20');
   const [country, setCountry] = useState('РОССИЯ');
   const [manufacturer, setManufacturer] = useState('');
   const [comment, setComment] = useState('');
@@ -231,7 +231,9 @@ export const NomenclatureCreatePage: React.FC = () => {
                 value={vat}
                 onChange={e => setVat(e.target.value)}
               >
-                <option>20%</option>
+                <option value="0">0%</option>
+                <option value="10">10%</option>
+                <option value="20">20%</option>
               </select>
             </div>
 

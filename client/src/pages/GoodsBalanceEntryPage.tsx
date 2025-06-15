@@ -26,8 +26,8 @@ interface GoodsRow {
   account: string
   name: string
   warehouse: string
-  quantity: number
-  cost: number
+  quantity: string | number // ← всегда строка
+  cost: string | number    // ← всегда строка
   country?: string
   customs?: string
 }
@@ -38,6 +38,7 @@ interface NomenclatureItem {
   article?: string
   unit?: string
   vat?: number
+  country?: string
 }
 
 const GoodsBalanceEntryPage: React.FC = () => {
@@ -78,7 +79,9 @@ const GoodsBalanceEntryPage: React.FC = () => {
   }>({ visible: false, targetRowIndex: null })
 
   const [accountList, setAccountList] = useState<{ account: string; name: string }[]>([])
-  const [selectedAccountCode, setSelectedAccountCode] = useState<string | null>(null)
+  const [selectedAccount, setSelectedAccount] = useState<{ account: string; name: string } | null>(null)
+
+  const [inputTempValue, setInputTempValue] = useState<string | null>(null)
 
   useEffect(() => {
     axios
@@ -97,18 +100,18 @@ const GoodsBalanceEntryPage: React.FC = () => {
   }, [goodsRows, selectedRowId])
 
   const handleAddRow = () => {
-    setGoodsRows((prev) => [
+    setGoodsRows(prev => [
       ...prev,
       {
         id: Date.now(),
         account: '',
         name: '',
         warehouse: '',
-        quantity: 0,
-        cost: 0,
+        quantity: '', // ← пустая строка
+        cost: '',     // ← пустая строка
         country: '',
         customs: '',
-      },
+      }
     ])
   }
 
@@ -123,7 +126,12 @@ const GoodsBalanceEntryPage: React.FC = () => {
   }
 
   const handleSave = () => {
-    console.log({ selectedOrgId, entryDate, goodsRows, responsible, comment })
+    const prepared = goodsRows.map(row => ({
+      ...row,
+      quantity: row.quantity === '' ? 0 : Number(row.quantity),
+      cost: row.cost === '' ? 0 : Number(row.cost),
+    }))
+    console.log(prepared)
   }
 
   const handleSaveAndClose = () => {
@@ -314,61 +322,93 @@ const GoodsBalanceEntryPage: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {goodsRows.map((row, index) => (
-              <tr
-                key={row.id}
-                onClick={() => setSelectedRowId(row.id)}
-                className={`hover:bg-gray-50 cursor-pointer ${selectedRowId === row.id ? 'bg-yellow-100' : ''}`}
-              >
-                <td className="p-2">{index + 1}</td>
+            {goodsRows.map((row, index) => {
+              const isAccountSelected = !!row.account
 
-                {(['account', 'name', 'warehouse', 'quantity', 'cost', 'country', 'customs'] as (keyof GoodsRow)[]).map((field) => (
-                  <td
-                    key={field}
-                    className="p-2"
-                    onDoubleClick={() => {
-                      if (field === 'name') {
-                        fetchNomenclature()
-                        setNomenclatureModal({ visible: true, targetRowIndex: index, selectedIndex: null })
-                      } else if (field === 'account') {
-                        fetchAccounts()
-                        setAccountModal({ visible: true, targetRowIndex: index })
-                      } else {
-                        setEditingCell({ rowId: row.id, column: field })
-                      }
-                    }}
-                  >
-                    {editingCell?.rowId === row.id && editingCell?.column === field ? (
-                      <input
-                        type="text"
-                        autoFocus
-                        className="w-full h-full bg-transparent px-0 py-0 border-none focus:outline-none"
-                        value={(row[field] ?? '') as string | number}
-                        onChange={(e) =>
-                          handleRowChange(
-                            index,
-                            field,
-                            ['quantity', 'cost'].includes(field)
-                              ? parseFloat(e.target.value)
-                              : e.target.value
-                          )
-                        }
-                        onBlur={() => setEditingCell(null)}
-                      />
-                    ) : (
-                      // отрисовка значений в ячейке
-                      field === 'cost'
-                        ? (row.cost ? row.cost : '') // Стоимость: пусто если 0
-                        : field === 'quantity'
-                          ? (row.quantity ? row.quantity : '<не требуется>') // Кол-во: <не требуется> если 0
-                          : row[field]
-                            ? row[field]
-                            : (['account', 'country'].includes(field) ? '' : '<не требуется>')
-                    )}
-                  </td>
-                ))}
-              </tr>
-            ))}
+              return (
+                <tr
+                  key={row.id}
+                  onClick={() => setSelectedRowId(row.id)}
+                  className={`hover:bg-gray-50 cursor-pointer ${selectedRowId === row.id ? 'bg-yellow-100' : ''}`}
+                >
+                  <td className="p-2">{index + 1}</td>
+
+                  {(['account', 'name', 'warehouse', 'quantity', 'cost', 'country', 'customs'] as (keyof GoodsRow)[]).map((field) => {
+                    const isEditable = (
+                      field === 'account' ||
+                      (isAccountSelected && ['name', 'quantity', 'cost', 'country'].includes(field))
+                    )
+
+                    const showPlaceholder = (
+                      (field === 'name' || field === 'quantity') && !isAccountSelected ||
+                      (field === 'warehouse' || field === 'customs')
+                    )
+
+                    const isEditing = editingCell?.rowId === row.id && editingCell?.column === field
+                    const isNumeric = ['quantity', 'cost'].includes(field)
+
+                    return (
+                      <td
+                        key={field}
+                        className="p-2"
+                        onDoubleClick={() => {
+                          if (!isEditable) return
+                          if (field === 'name') {
+                            fetchNomenclature()
+                            setNomenclatureModal({ visible: true, targetRowIndex: index, selectedIndex: null })
+                          } else if (field === 'account') {
+                            fetchAccounts()
+                            setAccountModal({ visible: true, targetRowIndex: index })
+                          } else {
+                            setEditingCell({ rowId: row.id, column: field })
+                          }
+                        }}
+                      >
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            autoFocus
+                            inputMode={isNumeric ? 'decimal' : undefined}
+                            className="w-full h-full bg-transparent px-0 py-0 border-none focus:outline-none"
+                            value={
+                              isEditing && row[field] === ''
+                                ? inputTempValue ?? '0'
+                                : inputTempValue ?? String(row[field] ?? '')
+                            }
+                            onFocus={(e) => {
+                              e.target.setSelectionRange(0, e.target.value.length)
+                              setInputTempValue(null)
+                            }}
+                            onChange={(e) => {
+                              const raw = e.target.value
+                              setInputTempValue(raw)
+
+                              if (isNumeric) {
+                                if (raw === '') {
+                                  handleRowChange(index, field, '')
+                                } else if (/^\d*\.?\d*$/.test(raw)) {
+                                  handleRowChange(index, field, raw)
+                                }
+                              } else {
+                                handleRowChange(index, field, raw)
+                              }
+                            }}
+                            onBlur={() => {
+                              setEditingCell(null)
+                              setInputTempValue(null)
+                            }}
+                          />
+                        ) : (
+                          showPlaceholder
+                            ? '<не требуется>'
+                            : (row[field] !== '' ? row[field] : '')
+                        )}
+                      </td>
+                    )
+                  })}
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
@@ -410,10 +450,14 @@ const GoodsBalanceEntryPage: React.FC = () => {
             <div className="flex items-center space-x-2 mb-2">
               <button
                 onClick={() => {
-                  if (nomenclatureModal.targetRowIndex !== null && nomenclatureModal.selectedIndex !== null) {
+                  if (
+                    nomenclatureModal.targetRowIndex !== null &&
+                    nomenclatureModal.selectedIndex !== null
+                  ) {
                     const selected = nomenclatureList[nomenclatureModal.selectedIndex]
                     const updated = [...goodsRows]
                     updated[nomenclatureModal.targetRowIndex].name = selected.name
+                    updated[nomenclatureModal.targetRowIndex].country = selected.country || ''
                     setGoodsRows(updated)
                   }
                   setNomenclatureModal({ visible: false, targetRowIndex: null, selectedIndex: null })
@@ -450,7 +494,7 @@ const GoodsBalanceEntryPage: React.FC = () => {
                       <td className="p-2">{item.name}</td>
                       <td className="p-2">{item.article}</td>
                       <td className="p-2">{item.unit}</td>
-                      <td className="p-2">{item.vat}</td>
+                      <td className="p-2">{item.vat}%</td>
                     </tr>
                   ))}
                 </tbody>
@@ -468,7 +512,7 @@ const GoodsBalanceEntryPage: React.FC = () => {
               <button
                 onClick={() => {
                   setAccountModal({ visible: false, targetRowIndex: null })
-                  setSelectedAccountCode(null)
+                  setSelectedAccount(null)
                 }}
                 className="text-gray-500 hover:text-black"
               >
@@ -479,18 +523,23 @@ const GoodsBalanceEntryPage: React.FC = () => {
             <div className="flex justify-start mb-3">
               <button
                 className="px-3 py-1 bg-yellow-400 text-black rounded hover:bg-yellow-500 font-semibold disabled:opacity-50"
-                disabled={!selectedAccountCode}
+                disabled={!selectedAccount}
                 onClick={() => {
-                  if (
-                    selectedAccountCode &&
-                    accountModal.targetRowIndex !== null
-                  ) {
+                  if (accountModal.targetRowIndex !== null && selectedAccount) {
                     const updated = [...goodsRows]
-                    updated[accountModal.targetRowIndex].account = selectedAccountCode
+                    const row = updated[accountModal.targetRowIndex]
+
+                    // ✅ Установим выбранный счёт
+                    row.account = selectedAccount.account
+
+                    // ✅ Разрешим редактирование, очистив <не требуется> (но НЕ ставим 0!)
+                    if (!row.name || row.name === '<не требуется>') row.name = ''
+                    if (row.quantity === '' || row.quantity === '<не требуется>' || row.quantity === 0) row.quantity = ''
+
                     setGoodsRows(updated)
+                    setAccountModal({ visible: false, targetRowIndex: null })
+                    setSelectedAccount(null)
                   }
-                  setAccountModal({ visible: false, targetRowIndex: null })
-                  setSelectedAccountCode(null)
                 }}
               >
                 Выбрать
@@ -508,8 +557,12 @@ const GoodsBalanceEntryPage: React.FC = () => {
                 {accountList.map((acc, idx) => (
                   <tr
                     key={idx}
-                    className={`cursor-pointer ${selectedAccountCode === acc.account ? 'bg-yellow-100' : 'hover:bg-gray-100'}`}
-                    onClick={() => setSelectedAccountCode(acc.account)}
+                    className={`cursor-pointer ${
+                      selectedAccount?.account === acc.account
+                        ? 'bg-yellow-100'
+                        : 'hover:bg-gray-100'
+                    }`}
+                    onClick={() => setSelectedAccount(acc)}
                   >
                     <td className="p-2 border border-gray-300">{acc.account}</td>
                     <td className="p-2 border border-gray-300">{acc.name}</td>

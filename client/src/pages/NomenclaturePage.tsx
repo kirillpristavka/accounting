@@ -202,7 +202,7 @@ const NomenclaturePage: React.FC = () => {
                       <td className="p-2">{item.name}</td>
                       <td className="p-2">{item.sku}</td>
                       <td className="p-2">{item.unit}</td>
-                      <td className="p-2">{item.vat}</td>
+                      <td className="p-2">{item.vat}%</td>
                       <td className="p-2">{item.comment}</td>
                     </tr>
                   ))}
