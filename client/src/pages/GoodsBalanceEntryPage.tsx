@@ -30,6 +30,7 @@ interface GoodsRow {
   cost: string | number    // ← всегда строка
   country?: string
   customs?: string
+  unit?: string
 }
 
 interface NomenclatureItem {
@@ -364,7 +365,40 @@ const GoodsBalanceEntryPage: React.FC = () => {
                           }
                         }}
                       >
-                        {isEditing ? (
+                        {isEditing && field === 'quantity' ? (
+                          <div className="flex items-center space-x-1">
+                            <input
+                              type="text"
+                              autoFocus
+                              inputMode="decimal"
+                              className="w-full h-full bg-transparent px-0 py-0 border-none focus:outline-none"
+                              value={
+                                isEditing && row[field] === ''
+                                  ? inputTempValue ?? '0'
+                                  : inputTempValue ?? String(row[field] ?? '')
+                              }
+                              onFocus={(e) => {
+                                e.target.setSelectionRange(0, e.target.value.length)
+                                setInputTempValue(null)
+                              }}
+                              onChange={(e) => {
+                                const raw = e.target.value
+                                setInputTempValue(raw)
+
+                                if (raw === '') {
+                                  handleRowChange(index, field, '')
+                                } else if (/^\d*\.?\d*$/.test(raw)) {
+                                  handleRowChange(index, field, raw)
+                                }
+                              }}
+                              onBlur={() => {
+                                setEditingCell(null)
+                                setInputTempValue(null)
+                              }}
+                            />
+                            {row.unit && <span className="text-gray-500">{row.unit}</span>}
+                          </div>
+                        ) : isEditing ? (
                           <input
                             type="text"
                             autoFocus
@@ -399,9 +433,15 @@ const GoodsBalanceEntryPage: React.FC = () => {
                             }}
                           />
                         ) : (
-                          showPlaceholder
-                            ? '<не требуется>'
-                            : (row[field] !== '' ? row[field] : '')
+                          field === 'quantity'
+                            ? (
+                              <div className="flex justify-between items-center">
+                                <span>{row.quantity !== '' ? row.quantity : ''}</span>
+                                {row.unit && <span className="text-gray-500 ml-1">{row.unit}</span>}
+                              </div>
+                            ) : field === 'customs'
+                              ? (row.customs !== '' ? row.customs : (showPlaceholder ? '<не требуется>' : ''))
+                              : (showPlaceholder ? '<не требуется>' : (row[field] !== '' ? row[field] : ''))
                         )}
                       </td>
                     )
@@ -456,11 +496,27 @@ const GoodsBalanceEntryPage: React.FC = () => {
                   ) {
                     const selected = nomenclatureList[nomenclatureModal.selectedIndex]
                     const updated = [...goodsRows]
-                    updated[nomenclatureModal.targetRowIndex].name = selected.name
-                    updated[nomenclatureModal.targetRowIndex].country = selected.country || ''
+                    const row = updated[nomenclatureModal.targetRowIndex]
+
+                    row.name = selected.name
+                    row.country = selected.country || ''
+
+                    if (selected.country?.toUpperCase() === 'РОССИЯ') {
+                      row.customs = 'ТД'
+                    }
+
+                    if (selected.unit) {
+                      row.unit = selected.unit
+                    }
+
                     setGoodsRows(updated)
                   }
-                  setNomenclatureModal({ visible: false, targetRowIndex: null, selectedIndex: null })
+
+                  setNomenclatureModal({
+                    visible: false,
+                    targetRowIndex: null,
+                    selectedIndex: null,
+                  })
                 }}
                 className="px-3 py-1 bg-yellow-400 text-black rounded hover:bg-yellow-500"
               >
