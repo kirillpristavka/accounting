@@ -1,14 +1,57 @@
 // src/pages/BalanceEntryPage.tsx
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import axios from 'axios'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Star, X, Save, Check } from 'lucide-react'
+import {
+  ChevronLeft, ChevronRight, Star, ChevronDown, Info, X,
+} from 'lucide-react'
+
+interface Organization {
+  id: number
+  name: string
+}
+
+interface BalanceDocument {
+  id: number
+  date: string
+  number: string
+  organization: { name: string }
+  comment?: string
+}
 
 const BalanceEntryPage: React.FC = () => {
   const navigate = useNavigate()
+  const [organizations, setOrganizations] = useState<Organization[]>([])
+  const [selectedOrgId, setSelectedOrgId] = useState<number | ''>('')
+  const [documents, setDocuments] = useState<BalanceDocument[]>([])
+  const [loading, setLoading] = useState(false)
+
   const { accountCode } = useParams<{ accountCode: string }>()
 
+  // Загрузка организаций
+  useEffect(() => {
+    axios.get('/api/organizations')
+      .then(res => {
+        setOrganizations(res.data)
+        if (res.data.length > 0) {
+          setSelectedOrgId(res.data[0].id)
+        }
+      })
+      .catch(console.error)
+  }, [])
+
+  // Загрузка документов
+  useEffect(() => {
+    if (!accountCode) return
+    axios
+      .get(`/api/goods-balance/by-account/${accountCode}`)
+      .then((res) => setDocuments(res.data))
+      //.catch(() => setError('Ошибка при загрузке документов'))
+      .finally(() => setLoading(false))
+  }, [accountCode])
+
   return (
-    <div className="flex flex-col h-full p-4 overflow-hidden">
+    <div className="p-4 flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center space-x-2">
@@ -23,69 +66,102 @@ const BalanceEntryPage: React.FC = () => {
           </button>
           <h1 className="text-xl font-semibold ml-2">Ввод остатков</h1>
         </div>
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 hover:bg-gray-100 rounded-full"
-          title="Закрыть"
-        >
+        <button className="p-2 hover:bg-gray-100 rounded-full">
           <X size={16} />
         </button>
       </div>
 
-      {/* Toolbar */}
-      <div className="flex items-center space-x-2 mb-4">
-        <button className="px-3 py-1 bg-white border rounded hover:bg-gray-100">
-          <Save size={16} className="inline mr-1" />
-          Записать
-        </button>
-        <button className="px-3 py-1 bg-white border rounded hover:bg-gray-100">
-          <Check size={16} className="inline mr-1" />
-          Провести
-        </button>
-      </div>
-
       {/* Filters */}
-      <div className="flex space-x-4 mb-4">
+      <div className="flex items-center mb-4 gap-6">
         <div className="flex items-center space-x-2">
-          <label className="text-sm font-medium">Организация:</label>
-          <select className="border px-2 py-1 rounded">
-            <option>Приставка К. А.</option>
+          <span className="text-sm font-medium">Организация:</span>
+          <select
+            className="border px-2 py-1 rounded"
+            value={selectedOrgId}
+            onChange={e => setSelectedOrgId(Number(e.target.value))}
+          >
+            {organizations.map(org => (
+              <option key={org.id} value={org.id}>{org.name}</option>
+            ))}
           </select>
         </div>
+
         <div className="flex items-center space-x-2">
-          <label className="text-sm font-medium">Дата:</label>
-          <input type="date" className="border px-2 py-1 rounded" value="2025-05-25" readOnly />
+          <span className="text-sm font-medium">Раздел учета:</span>
+          <input type="checkbox" checked readOnly />
+          <span>Товары</span>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center space-x-2">
+          <button
+            className="px-3 py-1 bg-white border rounded hover:bg-gray-100"
+            onClick={() => navigate('/goods-balance-entry')}
+          >
+            Создать
+          </button>
+          <button className="px-2 bg-white border rounded hover:bg-gray-100">
+            <div className="text-xs text-green-500 -ml-2">Дт</div>
+            <div className="text-xs text-red-500 ml-2">Кт</div>
+          </button>
+        </div>
+        <div className="flex items-center space-x-2">
+          <input
+            type="text"
+            placeholder="Поиск"
+            className="px-2 py-1 border rounded"
+          />
+          <button className="px-3 py-1 bg-white border rounded hover:bg-gray-100">
+            Еще <ChevronDown size={16} className="inline ml-1" />
+          </button>
         </div>
       </div>
 
       {/* Table */}
       <div className="flex-1 overflow-auto border rounded bg-white">
-        <table className="min-w-full text-sm table-fixed">
-          <thead className="bg-gray-100 sticky top-0 z-10">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-100">
             <tr>
-              <th className="p-2 text-left w-20">№</th>
-              <th className="p-2 text-left w-40">Номенклатура</th>
-              <th className="p-2 text-left w-40">Склад</th>
-              <th className="p-2 text-left w-30">Количество</th>
-              <th className="p-2 text-left w-30">Стоимость</th>
-              <th className="p-2 text-left w-40">Страна происхождения</th>
-              <th className="p-2 text-left w-60">Таможенная декларация или РНПТ</th>
+              <th className="p-2 text-left">Дата</th>
+              <th className="p-2 text-left">Номер</th>
+              <th className="p-2 text-left">БУ</th>
+              <th className="p-2 text-left">НУ</th>
+              <th className="p-2 text-left">СР</th>
+              <th className="p-2 text-left">Раздел учета</th>
+              <th className="p-2 text-left">Организация</th>
+              <th className="p-2 text-left">Ответственный</th>
+              <th className="p-2 text-left">Комментарий</th>
             </tr>
           </thead>
           <tbody>
-            {/* Здесь будут реальные строки остатков по счету */}
-            <tr>
-              <td className="p-2">1</td>
-              <td className="p-2">Ведро</td>
-              <td className="p-2">&lt;не требуется&gt;</td>
-              <td className="p-2">шт</td>
-              <td className="p-2"></td>
-              <td className="p-2">РОССИЯ</td>
-              <td className="p-2">ТД:</td>
-            </tr>
+            {documents.map((doc, idx) => (
+              <tr
+                key={doc.id}
+                className="hover:bg-gray-50 cursor-pointer"
+                onDoubleClick={() => navigate(`/goods-balance-entry/${doc.id}`)}
+              >
+                <td className="p-2">{new Date(doc.date).toLocaleDateString()}</td>
+                <td className="p-2">{doc.number}</td>
+                <td className="p-2 text-green-600">✓</td>
+                <td className="p-2 text-green-600">✓</td>
+                <td className="p-2 text-green-600">✓</td>
+                <td className="p-2">Товары</td>
+                <td className="p-2">{doc.organization.name}</td>
+                <td className="p-2">&lt;Не указан&gt;</td>
+                <td className="p-2">{doc.comment || ''}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
+
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/75">
+          <span className="text-gray-500">Загрузка...</span>
+        </div>
+      )}
     </div>
   )
 }

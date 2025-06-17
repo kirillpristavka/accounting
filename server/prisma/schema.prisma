@@ -19,14 +19,16 @@ enum PhysicalType {
 }
 
 model Organization {
-  id           Int            @id @default(autoincrement())
-  type         OrgType
-  physicalType PhysicalType?
+  id           Int                      @id @default(autoincrement())
   name         String
   prefix       String?
   inn          String?
   taxation     String?
+  type         OrgType
+  physicalType PhysicalType?
   selfEmployed SelfEmployed?
+
+  goodsDocuments GoodsBalanceDocument[]  @relation("OrgToGoodsDocs")
 }
 
 model SelfEmployed {
@@ -63,18 +65,29 @@ model Account {
   offBalance Boolean @default(false)  // false = основные, true = забалансовые
 }
 
-model GoodsBalanceRow {
-  id             Int      @id @default(autoincrement())
-  organizationId Int
-  date           DateTime
-  account        String
-  name           String
-  warehouse      String
-  quantity       Float
-  cost           Float
-  country        String?
-  customs        String?
-  unit           String?
-  responsible    String?
-  comment        String?
+model GoodsBalanceDocument {
+  id         Int       @id @default(autoincrement())
+  number     Int       @unique
+  date       DateTime
+  orgId      Int
+  comment    String?
+  responsible String?
+  entries    GoodsBalanceEntry[]
+
+  organization Organization @relation("OrgToGoodsDocs", fields: [orgId], references: [id])
+}
+
+model GoodsBalanceEntry {
+  id          Int    @id @default(autoincrement())
+  documentId  Int
+  account     String
+  name        String
+  warehouse   String
+  quantity    Float
+  cost        Float
+  country     String?
+  customs     String?
+  unit        String?
+
+  document GoodsBalanceDocument @relation(fields: [documentId], references: [id])
 }

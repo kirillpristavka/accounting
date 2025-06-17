@@ -84,6 +84,13 @@ const GoodsBalanceEntryPage: React.FC = () => {
 
   const [inputTempValue, setInputTempValue] = useState<string | null>(null)
 
+  const [documentNumber, setDocumentNumber] = useState<number | null>(null)
+
+  const formatDate = (isoDate: string) =>
+    new Date(isoDate).toLocaleDateString('ru-RU')
+
+  const [pageTitle, setPageTitle] = useState('Ввод остатков (создание) (Товары)')
+
   useEffect(() => {
     axios
       .get<Organization[]>('/api/organizations')
@@ -134,18 +141,19 @@ const GoodsBalanceEntryPage: React.FC = () => {
         cost: row.cost === '' ? 0 : Number(row.cost),
       }))
 
-      await axios.post('/api/goods-balance', {
-        organizationId: selectedOrgId,
+      const res = await axios.post('/api/goods-balance', {
         date: entryDate,
-        rows: prepared,
-        responsible,
+        orgId: selectedOrgId,
         comment,
+        responsible,
+        rows: prepared,
       })
 
-      alert('Остатки успешно сохранены')
+      setDocumentNumber(res.data.number)
+      setPageTitle(`Ввод остатков ${res.data.number.toString().padStart(10, '0')} от ${formatDate(entryDate)}`)
     } catch (err) {
-      console.error('Ошибка при сохранении:', err)
-      alert('Ошибка при сохранении')
+      console.error(err)
+      alert('Ошибка при сохранении документа')
     }
   }
 
@@ -209,7 +217,11 @@ const GoodsBalanceEntryPage: React.FC = () => {
           <button className="p-2 bg-white border rounded">
             <Star size={16} />
           </button>
-          <h1 className="text-xl font-semibold ml-2">Ввод остатков (создание) (Товары)</h1>
+          <h1 className="text-xl font-semibold ml-2">
+            {documentNumber
+              ? `Ввод остатков ${documentNumber.toString().padStart(10, '0')} от ${formatDate(entryDate)} (Товары)`
+              : 'Ввод остатков (создание) (Товары)'}
+          </h1>
         </div>
         <button
           onClick={handleClose}
@@ -262,7 +274,12 @@ const GoodsBalanceEntryPage: React.FC = () => {
       <div className="flex flex-wrap items-center gap-4 mb-4">
         <div className="flex items-center space-x-2">
           <label className="text-sm font-medium">Номер:</label>
-          <input type="text" className="border px-2 py-1 rounded w-32" placeholder="" />
+          <input
+            type="text"
+            className="border px-2 py-1 rounded w-32"
+            placeholder=""
+            value={documentNumber ? documentNumber.toString().padStart(10, '0') : ''}
+          />
         </div>
         <div className="flex items-center space-x-2">
           <label className="text-sm font-medium">от:</label>

@@ -5,7 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import organizationsRouter from './routes/organizations';
 import nomenclatureRouter from './routes/nomenclature';
 import accountsRouter        from './routes/accounts';
-import goodsBalanceRoutes from './routes/goodsBalance';
+import goodsBalanceRoutes from './routes/goods-balance';
 
 const app = express();
 const prisma = new PrismaClient();
