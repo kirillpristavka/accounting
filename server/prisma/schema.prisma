@@ -62,3 +62,19 @@ model Account {
   name       String
   offBalance Boolean @default(false)  // false = основные, true = забалансовые
 }
+
+model GoodsBalanceRow {
+  id             Int      @id @default(autoincrement())
+  organizationId Int
+  date           DateTime
+  account        String
+  name           String
+  warehouse      String
+  quantity       Float
+  cost           Float
+  country        String?
+  customs        String?
+  unit           String?
+  responsible    String?
+  comment        String?
+}

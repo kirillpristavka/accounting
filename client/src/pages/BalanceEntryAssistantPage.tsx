@@ -179,7 +179,11 @@ const BalanceEntryAssistantPage: React.FC = () => {
             </thead>
             <tbody>
               {accounts.map(acc => (
-                <tr key={acc.account} className="hover:bg-gray-50 even:bg-gray-50">
+                <tr
+                  key={acc.account}
+                  onDoubleClick={() => navigate(`/balance-entry/${acc.account}`)}
+                  className="hover:bg-gray-50 even:bg-gray-50 cursor-pointer"
+                >
                   <td className="p-2">{acc.account}</td>
                   <td className="p-2">{acc.name}</td>
                   <td className="p-2">{acc.balanceDr || '-'}</td>

@@ -5,6 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import organizationsRouter from './routes/organizations';
 import nomenclatureRouter from './routes/nomenclature';
 import accountsRouter        from './routes/accounts';
+import goodsBalanceRoutes from './routes/goodsBalance';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use('/api/organizations', organizationsRouter(prisma));
 app.use('/api/nomenclature', nomenclatureRouter(prisma));
 app.use('/api/accounts', accountsRouter(prisma));
+app.use('/api/goods-balance', goodsBalanceRoutes(prisma));
 
 const port = 4000;
 app.listen(port, () => {

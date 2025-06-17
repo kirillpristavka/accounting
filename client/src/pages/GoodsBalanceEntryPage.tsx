@@ -126,13 +126,27 @@ const GoodsBalanceEntryPage: React.FC = () => {
     setGoodsRows(updated)
   }
 
-  const handleSave = () => {
-    const prepared = goodsRows.map(row => ({
-      ...row,
-      quantity: row.quantity === '' ? 0 : Number(row.quantity),
-      cost: row.cost === '' ? 0 : Number(row.cost),
-    }))
-    console.log(prepared)
+  const handleSave = async () => {
+    try {
+      const prepared = goodsRows.map(row => ({
+        ...row,
+        quantity: row.quantity === '' ? 0 : Number(row.quantity),
+        cost: row.cost === '' ? 0 : Number(row.cost),
+      }))
+
+      await axios.post('/api/goods-balance', {
+        organizationId: selectedOrgId,
+        date: entryDate,
+        rows: prepared,
+        responsible,
+        comment,
+      })
+
+      alert('Остатки успешно сохранены')
+    } catch (err) {
+      console.error('Ошибка при сохранении:', err)
+      alert('Ошибка при сохранении')
+    }
   }
 
   const handleSaveAndClose = () => {
@@ -405,9 +419,9 @@ const GoodsBalanceEntryPage: React.FC = () => {
                             inputMode={isNumeric ? 'decimal' : undefined}
                             className="w-full h-full bg-transparent px-0 py-0 border-none focus:outline-none"
                             value={
-                              isEditing && row[field] === ''
-                                ? inputTempValue ?? '0'
-                                : inputTempValue ?? String(row[field] ?? '')
+                              inputTempValue !== null
+                                ? inputTempValue
+                                : (isNumeric && row[field] === '' ? '0' : String(row[field] ?? ''))
                             }
                             onFocus={(e) => {
                               e.target.setSelectionRange(0, e.target.value.length)
