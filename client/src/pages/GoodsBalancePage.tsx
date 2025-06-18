@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import axios from 'axios'
 import {
   ChevronLeft,
@@ -42,7 +42,7 @@ interface NomenclatureItem {
   country?: string
 }
 
-const GoodsBalanceEntryPage: React.FC = () => {
+const GoodsBalancePage: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { closeTab } = useAppContext()
@@ -91,6 +91,9 @@ const GoodsBalanceEntryPage: React.FC = () => {
 
   const [pageTitle, setPageTitle] = useState('Ввод остатков (создание) (Товары)')
 
+  const { id } = useParams<{ id: string }>()
+  const isEditing = !!id
+
   useEffect(() => {
     axios
       .get<Organization[]>('/api/organizations')
@@ -134,26 +137,24 @@ const GoodsBalanceEntryPage: React.FC = () => {
   }
 
   const handleSave = async () => {
+    const payload = {
+      date: entryDate,
+      orgId: selectedOrgId,
+      comment,
+      responsible,
+      rows: goodsRows,
+    }
+
     try {
-      const prepared = goodsRows.map(row => ({
-        ...row,
-        quantity: row.quantity === '' ? 0 : Number(row.quantity),
-        cost: row.cost === '' ? 0 : Number(row.cost),
-      }))
-
-      const res = await axios.post('/api/goods-balance', {
-        date: entryDate,
-        orgId: selectedOrgId,
-        comment,
-        responsible,
-        rows: prepared,
-      })
-
-      setDocumentNumber(res.data.number)
-      setPageTitle(`Ввод остатков ${res.data.number.toString().padStart(10, '0')} от ${formatDate(entryDate)}`)
+      if (isEditing) {
+        await axios.put(`/api/goods-balance/${id}`, payload)
+      } else {
+        const res = await axios.post('/api/goods-balance', payload)
+        setDocumentNumber(res.data.number)
+        navigate(`/goods-balance/${res.data.id}`, { replace: true })
+      }
     } catch (err) {
-      console.error(err)
-      alert('Ошибка при сохранении документа')
+      console.error('Ошибка при сохранении', err)
     }
   }
 
@@ -203,6 +204,33 @@ const GoodsBalanceEntryPage: React.FC = () => {
     }
   }
 
+  useEffect(() => {
+    if (isEditing) {
+      axios.get(`/api/goods-balance/${id}`).then((res) => {
+        const doc = res.data
+        setEntryDate(doc.date.slice(0, 10))
+        setSelectedOrgId(doc.orgId)
+        setComment(doc.comment || '')
+        setResponsible(doc.responsible || '')
+        setDocumentNumber(doc.number)
+
+        setGoodsRows(
+          doc.entries.map((entry: any) => ({
+            id: Date.now() + Math.random(),
+            account: entry.account,
+            name: entry.name,
+            warehouse: entry.warehouse,
+            quantity: entry.quantity.toString(),
+            cost: entry.cost.toString(),
+            country: entry.country || '',
+            customs: entry.customs || '',
+            unit: entry.unit || '',
+          }))
+        )
+      })
+    }
+  }, [id])
+
   return (
     <div className="p-4 bg-gray-50 flex flex-col h-full overflow-hidden">
       {/* Header */}
@@ -219,8 +247,9 @@ const GoodsBalanceEntryPage: React.FC = () => {
           </button>
           <h1 className="text-xl font-semibold ml-2">
             {documentNumber
-              ? `Ввод остатков ${documentNumber.toString().padStart(10, '0')} от ${formatDate(entryDate)} (Товары)`
-              : 'Ввод остатков (создание) (Товары)'}
+              ? `Ввод остатков ${documentNumber!.toString().padStart(10, '0')} от ${formatDate(entryDate)} (Товары)`
+              : 'Ввод остатков (создание) (Товары)'
+            }
           </h1>
         </div>
         <button
@@ -664,4 +693,4 @@ const GoodsBalanceEntryPage: React.FC = () => {
   )
 }
 
-export default GoodsBalanceEntryPage
+export default GoodsBalancePage

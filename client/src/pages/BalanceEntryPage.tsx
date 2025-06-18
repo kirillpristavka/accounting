@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import {
   ChevronLeft, ChevronRight, Star, ChevronDown, Info, X,
 } from 'lucide-react'
+import { useAppContext } from '../context/AppContext'
 
 interface Organization {
   id: number
@@ -19,6 +20,35 @@ interface BalanceDocument {
   comment?: string
 }
 
+  const sections = [
+    'Основные средства',
+    'НМА и НИОКР',
+    'Капитальные вложения',
+    'Материалы',
+    'НДС',
+    'Незавершенное производство',
+    'Товары',
+    'Готовая продукция',
+    'Товары отгруженные',
+    'Денежные средства',
+    'Расчеты с поставщиками',
+    'Расчеты с покупателями',
+    'Расчеты по налогам и взносам',
+    'Расчеты с персоналом по оплате труда',
+    'Расчеты с подотчетными лицами',
+    'Расчеты с учредителями',
+    'Расчеты с разными дебиторами и кредиторами',
+    'НДС по авансам',
+    'Капитал',
+    'Расходы будущих периодов',
+    'Отложенные налоговые активы/обязательства',
+    'Прочие счета бухгалтерского учета',
+    'НДС по реализации',
+    'Прочие расходы налогового учета УСН и ИП',
+    'Спецоснастка и эксплуатации',
+    'Аренда и лизинг',
+  ]
+
 const BalanceEntryPage: React.FC = () => {
   const navigate = useNavigate()
   const [organizations, setOrganizations] = useState<Organization[]>([])
@@ -27,6 +57,10 @@ const BalanceEntryPage: React.FC = () => {
   const [loading, setLoading] = useState(false)
 
   const { accountCode } = useParams<{ accountCode: string }>()
+
+  const [selectedSection, setSelectedSection] = useState(sections[6]) // Товары
+  const [useOrgFilter, setUseOrgFilter] = useState(true)
+  const [useSectionFilter, setUseSectionFilter] = useState(true)
 
   // Загрузка организаций
   useEffect(() => {
@@ -50,6 +84,13 @@ const BalanceEntryPage: React.FC = () => {
       .finally(() => setLoading(false))
   }, [accountCode])
 
+  const { closeTab } = useAppContext()
+
+  const handleClose = () => {
+    closeTab(location.pathname)
+    navigate(-1)
+  }
+
   return (
     <div className="p-4 flex flex-col h-full overflow-hidden">
       {/* Header */}
@@ -66,31 +107,48 @@ const BalanceEntryPage: React.FC = () => {
           </button>
           <h1 className="text-xl font-semibold ml-2">Ввод остатков</h1>
         </div>
-        <button className="p-2 hover:bg-gray-100 rounded-full">
+        <button
+          onClick={handleClose}
+          className="p-2 rounded-full hover:bg-gray-100"
+          title="Закрыть"
+        >
           <X size={16} />
         </button>
       </div>
 
       {/* Filters */}
-      <div className="flex items-center mb-4 gap-6">
-        <div className="flex items-center space-x-2">
+      <div className="flex space-x-6 items-center mb-2">
+        <label className="flex items-center space-x-2">
+          <input type="checkbox" checked={useOrgFilter} onChange={() => setUseOrgFilter(v => !v)} />
           <span className="text-sm font-medium">Организация:</span>
           <select
             className="border px-2 py-1 rounded"
             value={selectedOrgId}
             onChange={e => setSelectedOrgId(Number(e.target.value))}
+            disabled={!useOrgFilter}
           >
             {organizations.map(org => (
-              <option key={org.id} value={org.id}>{org.name}</option>
+              <option key={org.id} value={org.id}>
+                {org.name}
+              </option>
             ))}
           </select>
-        </div>
+        </label>
 
-        <div className="flex items-center space-x-2">
+        <label className="flex items-center space-x-2">
+          <input type="checkbox" checked={useSectionFilter} onChange={() => setUseSectionFilter(v => !v)} />
           <span className="text-sm font-medium">Раздел учета:</span>
-          <input type="checkbox" checked readOnly />
-          <span>Товары</span>
-        </div>
+          <select
+            className="border px-2 py-1 rounded"
+            value={selectedSection}
+            onChange={e => setSelectedSection(e.target.value)}
+            disabled={!useSectionFilter}
+          >
+            {sections.map((s, idx) => (
+              <option key={idx} value={s}>{s}</option>
+            ))}
+          </select>
+        </label>
       </div>
 
       {/* Actions */}
@@ -140,7 +198,7 @@ const BalanceEntryPage: React.FC = () => {
               <tr
                 key={doc.id}
                 className="hover:bg-gray-50 cursor-pointer"
-                onDoubleClick={() => navigate(`/goods-balance-entry/${doc.id}`)}
+                onDoubleClick={() => navigate(`/goods-balance/${doc.id}`)}
               >
                 <td className="p-2">{new Date(doc.date).toLocaleDateString()}</td>
                 <td className="p-2">{doc.number}</td>

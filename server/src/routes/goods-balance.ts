@@ -65,5 +65,65 @@ export default (prisma: PrismaClient) => {
     }
   })
 
+  router.get('/:id', async (req: Request, res: Response) => {
+    try {
+      const document = await prisma.goodsBalanceDocument.findUnique({
+        where: { id: Number(req.params.id) },
+        include: {
+          entries: true,
+          organization: true,
+        },
+      })
+
+      if (!document) res.status(404).json({ error: 'Документ не найден' })
+
+      res.json(document)
+    } catch (err) {
+      console.error(err)
+      res.status(500).json({ error: 'Ошибка при получении документа' })
+    }
+  })
+
+  // PUT /api/goods-balance/:id — обновить существующий документ
+  router.put('/:id', async (req, res) => {
+    try {
+      const { id } = req.params
+      const { date, orgId, comment, responsible, rows } = req.body
+
+      // Удалим старые записи
+      await prisma.goodsBalanceEntry.deleteMany({
+        where: { documentId: Number(id) }
+      })
+
+      // Обновим сам документ
+      const updated = await prisma.goodsBalanceDocument.update({
+        where: { id: Number(id) },
+        data: {
+          date: new Date(date),
+          orgId,
+          comment,
+          responsible,
+          entries: {
+            create: rows.map((row: any) => ({
+              account: row.account,
+              name: row.name,
+              warehouse: row.warehouse,
+              quantity: parseFloat(row.quantity || '0'),
+              cost: parseFloat(row.cost || '0'),
+              country: row.country,
+              customs: row.customs,
+              unit: row.unit,
+            }))
+          }
+        }
+      })
+
+      res.json({ success: true, id: updated.id })
+    } catch (err) {
+      console.error(err)
+      res.status(500).json({ error: 'Ошибка при обновлении документа' })
+    }
+  })
+
   return router
 }
