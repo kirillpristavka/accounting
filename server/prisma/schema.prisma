@@ -89,5 +89,5 @@ model GoodsBalanceEntry {
   customs     String?
   unit        String?
 
-  document GoodsBalanceDocument @relation(fields: [documentId], references: [id])
+  document GoodsBalanceDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
 }

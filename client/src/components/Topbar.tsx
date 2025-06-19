@@ -11,7 +11,6 @@ import { useOrganizationCreate } from '../stores/useOrganizationCreate';
 // Поскольку этот resetForm нужен только как тип, а не как значение в рантайме, импортируем через type-only.
 // Однако функцию мы вызываем в runtime, поэтому её нужно импортировать “обычным” импортом:
 import { useOrganizationEdit } from '../stores/useOrganizationEdit';
-import type { Taxation } from '../stores/useOrganizationEdit'; // Если где-то нужен тип
 import { Home, X } from 'lucide-react';
 
 // Статические имена маршрутов (без “динамических” /organizations/:id/edit)
@@ -22,7 +21,7 @@ const routeNames: Record<string, string> = {
   '/nomenclature': 'Номенклатура',
   '/nomenclature/create': 'Номенклатура (создание)',
   '/balance-entry-assistant': 'Помощник ввода начальных остатков',
-  '/goods-balance-entry': 'Ввод остатков (Товары)',
+  '/goods-balance-entry': 'Ввод остатков (Товары)'
   // … другие статические пути …
 };
 
@@ -40,25 +39,19 @@ const Topbar: React.FC = () => {
   useEffect(() => {
     const path = location.pathname;
 
-    // 1) Если это страница редактирования организации: "/organizations/:id/edit"
+    // 1) Редактирование организации
     const orgEditMatch = path.match(/^\/organizations\/(\d+)\/edit$/);
     if (orgEditMatch) {
-      // Если уже подгружали для этой вкладки, не делаем повторно
       if (didFetchOrgRef.current) return;
       didFetchOrgRef.current = true;
 
       const orgId = orgEditMatch[1];
       axios
-        .get<{ lastName: string; firstName: string; middleName: string }>(
-          `/api/organizations/${orgId}`
-        )
+        .get(`/api/organizations/${orgId}`)
         .then((resp) => {
           const { lastName, firstName, middleName } = resp.data;
-          // Формируем ФИО в формате "Фамилия И.О."
           const fio = lastName
-            ? `${lastName.trim()} ${
-                firstName ? firstName.trim()[0].toUpperCase() + '.' : ''
-              }${middleName ? middleName.trim()[0].toUpperCase() + '.' : ''}`
+            ? `${lastName.trim()} ${firstName?.trim()[0]?.toUpperCase() || ''}.${middleName?.trim()[0]?.toUpperCase() || ''}.`
             : '<Без названия>';
           const label = `${fio} (Организация)`;
 
@@ -67,7 +60,6 @@ const Topbar: React.FC = () => {
           }
         })
         .catch(() => {
-          // Если не удалось подгрузить ФИО, показываем fallback
           const fallbackLabel = `Организация #${orgId}`;
           if (!openTabs.some((tab) => tab.path === path)) {
             openTab(fallbackLabel, path);
@@ -77,12 +69,21 @@ const Topbar: React.FC = () => {
       return;
     }
 
-    // 2) Иначе – статическая вкладка из routeNames
+    // 1.5) Документы по конкретному счету
+    if (path.startsWith('/balance-entry/')) {
+      const label = 'Ввод остатков';
+      if (!openTabs.some((tab) => tab.path === path)) {
+        openTab(label, path);
+      }
+      return;
+    }
+
+    // 2) Статические маршруты
     const labelStatic = routeNames[path];
     if (labelStatic && !openTabs.some((tab) => tab.path === path)) {
       openTab(labelStatic, path);
     }
-  }, [location.pathname]); // Зависит только от location.pathname
+  }, [location.pathname]);
 
   // Когда маршрут меняется (включая уход со страницы), сбрасываем флаг didFetchOrgRef,
   // чтобы при возвращении на "…/:id/edit" заново подгрузить ФИО

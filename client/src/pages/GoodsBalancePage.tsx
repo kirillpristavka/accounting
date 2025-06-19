@@ -91,6 +91,14 @@ const GoodsBalancePage: React.FC = () => {
 
   const [pageTitle, setPageTitle] = useState('Ввод остатков (создание) (Товары)')
 
+  useEffect(() => {
+    if (documentNumber) {
+      setPageTitle(`Ввод остатков ${documentNumber.toString().padStart(10, '0')} от ${formatDate(entryDate)} (Товары)`)
+    } else {
+      setPageTitle('Ввод остатков (создание) (Товары)')
+    }
+  }, [documentNumber, entryDate])
+
   const { id } = useParams<{ id: string }>()
   const isEditing = !!id
 
@@ -245,12 +253,7 @@ const GoodsBalancePage: React.FC = () => {
           <button className="p-2 bg-white border rounded">
             <Star size={16} />
           </button>
-          <h1 className="text-xl font-semibold ml-2">
-            {documentNumber
-              ? `Ввод остатков ${documentNumber!.toString().padStart(10, '0')} от ${formatDate(entryDate)} (Товары)`
-              : 'Ввод остатков (создание) (Товары)'
-            }
-          </h1>
+          <h1 className="text-xl font-semibold ml-2">{pageTitle}</h1>
         </div>
         <button
           onClick={handleClose}
@@ -349,7 +352,7 @@ const GoodsBalancePage: React.FC = () => {
             disabled={selectedRowId === null}
             className="px-3 py-2 bg-white border rounded hover:bg-gray-100 disabled:opacity-50"
           >
-            <Trash2 className="text-red-500" size={16} />
+            <Trash2 className={selectedRowId !== null ? "text-red-500" : ""} size={16} />
           </button>
           <div>
             <button className="p-2 py-2 bg-white border border-r-0 hover:bg-gray-100" title="Вверх">

@@ -112,7 +112,7 @@ const OrganizationsPage: React.FC = () => {
         >
           <Trash2
             size={16}
-            className={selectedId ? 'text-red-600' : 'text-gray-600'}
+            className={selectedId ? "text-red-500" : ""}
           />
         </button>
         <button className="p-2 bg-white border rounded hover:bg-gray-100">

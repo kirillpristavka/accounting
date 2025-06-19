@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
-  ChevronLeft, ChevronRight, Star, ChevronDown, Info, X,
+  ChevronLeft, ChevronRight, Star, ChevronDown, X, Trash2
 } from 'lucide-react'
 import { useAppContext } from '../context/AppContext'
 
@@ -20,34 +20,34 @@ interface BalanceDocument {
   comment?: string
 }
 
-  const sections = [
-    'Основные средства',
-    'НМА и НИОКР',
-    'Капитальные вложения',
-    'Материалы',
-    'НДС',
-    'Незавершенное производство',
-    'Товары',
-    'Готовая продукция',
-    'Товары отгруженные',
-    'Денежные средства',
-    'Расчеты с поставщиками',
-    'Расчеты с покупателями',
-    'Расчеты по налогам и взносам',
-    'Расчеты с персоналом по оплате труда',
-    'Расчеты с подотчетными лицами',
-    'Расчеты с учредителями',
-    'Расчеты с разными дебиторами и кредиторами',
-    'НДС по авансам',
-    'Капитал',
-    'Расходы будущих периодов',
-    'Отложенные налоговые активы/обязательства',
-    'Прочие счета бухгалтерского учета',
-    'НДС по реализации',
-    'Прочие расходы налогового учета УСН и ИП',
-    'Спецоснастка и эксплуатации',
-    'Аренда и лизинг',
-  ]
+const sections = [
+  'Основные средства',
+  'НМА и НИОКР',
+  'Капитальные вложения',
+  'Материалы',
+  'НДС',
+  'Незавершенное производство',
+  'Товары',
+  'Готовая продукция',
+  'Товары отгруженные',
+  'Денежные средства',
+  'Расчеты с поставщиками',
+  'Расчеты с покупателями',
+  'Расчеты по налогам и взносам',
+  'Расчеты с персоналом по оплате труда',
+  'Расчеты с подотчетными лицами',
+  'Расчеты с учредителями',
+  'Расчеты с разными дебиторами и кредиторами',
+  'НДС по авансам',
+  'Капитал',
+  'Расходы будущих периодов',
+  'Отложенные налоговые активы/обязательства',
+  'Прочие счета бухгалтерского учета',
+  'НДС по реализации',
+  'Прочие расходы налогового учета УСН и ИП',
+  'Спецоснастка и эксплуатации',
+  'Аренда и лизинг',
+]
 
 const BalanceEntryPage: React.FC = () => {
   const navigate = useNavigate()
@@ -61,6 +61,8 @@ const BalanceEntryPage: React.FC = () => {
   const [selectedSection, setSelectedSection] = useState(sections[6]) // Товары
   const [useOrgFilter, setUseOrgFilter] = useState(true)
   const [useSectionFilter, setUseSectionFilter] = useState(true)
+
+  const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null)
 
   // Загрузка организаций
   useEffect(() => {
@@ -90,6 +92,24 @@ const BalanceEntryPage: React.FC = () => {
     closeTab(location.pathname)
     navigate(-1)
   }
+
+  const handleDelete = async () => {
+    if (selectedRowIndex === null) return
+    const doc = documents[selectedRowIndex]
+    if (!doc?.id) return
+
+    if (!confirm(`Удалить документ №${doc.number}?`)) return
+
+    try {
+      await axios.delete(`/api/goods-balance/${doc.id}`)
+      setDocuments(prev => prev.filter((_, i) => i !== selectedRowIndex))
+      setSelectedRowIndex(null)
+    } catch (err) {
+      console.error('Ошибка при удалении документа', err)
+      alert('Ошибка при удалении документа')
+    }
+  }
+
 
   return (
     <div className="p-4 flex flex-col h-full overflow-hidden">
@@ -160,6 +180,13 @@ const BalanceEntryPage: React.FC = () => {
           >
             Создать
           </button>
+          <button
+            className="px-2 py-2 bg-white border rounded hover:bg-gray-100 disabled:opacity-50"
+            onClick={handleDelete}
+            disabled={selectedRowIndex === null}
+          >
+            <Trash2 className={selectedRowIndex !== null ? "text-red-500" : ""} size={16} />
+          </button>
           <button className="px-2 bg-white border rounded hover:bg-gray-100">
             <div className="text-xs text-green-500 -ml-2">Дт</div>
             <div className="text-xs text-red-500 ml-2">Кт</div>
@@ -197,7 +224,10 @@ const BalanceEntryPage: React.FC = () => {
             {documents.map((doc, idx) => (
               <tr
                 key={doc.id}
-                className="hover:bg-gray-50 cursor-pointer"
+                className={`cursor-pointer hover:bg-gray-50 ${
+                  selectedRowIndex === idx ? 'bg-yellow-100' : ''
+                }`}
+                onClick={() => setSelectedRowIndex(idx)}
                 onDoubleClick={() => navigate(`/goods-balance/${doc.id}`)}
               >
                 <td className="p-2">{new Date(doc.date).toLocaleDateString()}</td>

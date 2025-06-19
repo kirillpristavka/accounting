@@ -125,5 +125,16 @@ export default (prisma: PrismaClient) => {
     }
   })
 
+  router.delete('/:id', async (req, res) => {
+    const id = Number(req.params.id)
+    try {
+      await prisma.goodsBalanceDocument.delete({ where: { id } })
+      res.status(204).end()
+    } catch (err) {
+      console.error(err)
+      res.status(500).json({ error: 'Ошибка удаления документа' })
+    }
+  })
+
   return router
 }
